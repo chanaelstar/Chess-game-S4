@@ -40,25 +40,31 @@ int main()
 
                     ImGui::End();
 
-                    // Creating window called "Chess board"
+                    // Chess board
                     ImGui::Begin("Chess board");
-
-                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.f, 0.f, 0.f, 0.f}); // Changes the color of all buttons until we call ImGui::PopStyleColor(). There is also ImGuiCol_ButtonActive and ImGuiCol_ButtonHovered
-                    ImGui::PushID(0);
-                    if (ImGui::Button("0", ImVec2{50.f, 50.f}))
-                        std::cout << "Clicked button 1\n";
-                    ImGui::SameLine(); // Draw the next ImGui widget on the same line as the previous one. Otherwise it would be below it
-                    ImGui::PopID();
-                    ImGui::PopStyleColor();
-
-                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{1.f, 1.f, 1.f, 1.f});
-                    ImGui::PushID(1);
-                    if (ImGui::Button("1", ImVec2{50.f, 50.f}))
-                        std::cout << "Clicked button 1\n";
-                    ImGui::SameLine();
-                    ImGui::PopID();
-                    ImGui::PopStyleColor();
-
+                    float button_size = 50.f;
+                    for (int row = 0; row < 8; row++)
+                    {
+                        for (int col = 0; col < 8; col++)
+                        {
+                            bool   isWhite = (row + col) % 2 == 0;
+                            ImVec4 color   = isWhite ? ImVec4(0.8f, 0.8f, 0.8f, 1.0f) : ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
+                            ImGui::PushStyleColor(ImGuiCol_Button, color);
+                            ImGui::PushID(row * 8 + col);
+                            if (ImGui::Button("", ImVec2(button_size, button_size)))
+                            {
+                                char colLetter = 'a' + col;
+                                int  rowNumber = 8 - row;
+                                std::cout << "Clicked square: " << rowNumber << colLetter << "\n";
+                            }
+                            ImGui::PopID();
+                            ImGui::PopStyleColor();
+                            if (col < 7)
+                            {
+                                ImGui::SameLine();
+                            }
+                        }
+                    }
                     ImGui::End();
                 },
         }
