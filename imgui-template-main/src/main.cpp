@@ -14,7 +14,7 @@ int main()
                 [&]() {
                     ImGui::ShowDemoWindow(); // This opens a window which shows tons of examples of what you can do with ImGui. You should check it out! Also, you can use the "Item Picker" in the top menu of that demo window: then click on any widget and it will show you the corresponding code directly in your IDE!
 
-                        ImGui::Begin("Example");
+                    ImGui::Begin("Example");
 
                     ImGui::SliderFloat("My Value", &value, 0.f, 3.f);
 
@@ -36,6 +36,27 @@ int main()
                         std::cout << "Clicked button 3\n";
                     ImGui::PopID();
 
+                    ImGui::PopStyleColor();
+
+                    ImGui::End();
+
+                    // Creating window called "Chess board"
+                    ImGui::Begin("Chess board");
+
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.f, 0.f, 0.f, 0.f}); // Changes the color of all buttons until we call ImGui::PopStyleColor(). There is also ImGuiCol_ButtonActive and ImGuiCol_ButtonHovered
+                    ImGui::PushID(0);
+                    if (ImGui::Button("0", ImVec2{50.f, 50.f}))
+                        std::cout << "Clicked button 1\n";
+                    ImGui::SameLine(); // Draw the next ImGui widget on the same line as the previous one. Otherwise it would be below it
+                    ImGui::PopID();
+                    ImGui::PopStyleColor();
+
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{1.f, 1.f, 1.f, 1.f});
+                    ImGui::PushID(1);
+                    if (ImGui::Button("1", ImVec2{50.f, 50.f}))
+                        std::cout << "Clicked button 1\n";
+                    ImGui::SameLine();
+                    ImGui::PopID();
                     ImGui::PopStyleColor();
 
                     ImGui::End();
