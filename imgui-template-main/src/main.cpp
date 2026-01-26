@@ -1,4 +1,5 @@
 #include <imgui.h>
+#include <algorithm>
 #include <iostream>
 #include "quick_imgui/quick_imgui.hpp"
 
@@ -49,7 +50,12 @@ int main()
                     const ImVec4 CHESS_LIGHT = ImVec4(0.93f, 0.93f, 0.82f, 1.0f);
                     const ImVec4 CHESS_DARK  = ImVec4(0.46f, 0.59f, 0.34f, 1.0f);
 
-                    float button_size = 50.f;
+                    ImVec2 avail       = ImGui::GetContentRegionAvail();
+                    float  boardWidth  = avail.x;
+                    float  boardHeight = avail.y;
+                    float  boardSize   = std::min(boardWidth, boardHeight);
+                    float  button_size = boardSize / 8.0f;
+
                     for (int row = 0; row < 8; row++)
                     {
                         for (int col = 0; col < 8; col++)
