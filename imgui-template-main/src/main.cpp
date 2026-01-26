@@ -46,13 +46,16 @@ int main()
                     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 0.f));
                     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 0.f));
 
+                    const ImVec4 CHESS_LIGHT = ImVec4(0.93f, 0.93f, 0.82f, 1.0f);
+                    const ImVec4 CHESS_DARK  = ImVec4(0.46f, 0.59f, 0.34f, 1.0f);
+
                     float button_size = 50.f;
                     for (int row = 0; row < 8; row++)
                     {
                         for (int col = 0; col < 8; col++)
                         {
                             bool   isWhite = (row + col) % 2 == 0;
-                            ImVec4 color   = isWhite ? ImVec4(0.8f, 0.8f, 0.8f, 1.0f) : ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
+                            ImVec4 color   = isWhite ? CHESS_LIGHT : CHESS_DARK;
                             ImGui::PushStyleColor(ImGuiCol_Button, color);
                             ImGui::PushID(row * 8 + col);
                             if (ImGui::Button("", ImVec2(button_size, button_size)))
