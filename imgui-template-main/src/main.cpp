@@ -10,7 +10,11 @@ int main()
     quick_imgui::loop(
         "Chess",
         {
-            .init = [&]() {},
+            .init = [&]() {
+                // ImGuiIO& io = ImGui::GetIO();
+                // io.Fonts->AddFontFromFileTTF("assets/fonts/Alpha.ttf", 16.0f);
+                // io.Fonts->Build(); 
+            },
             .loop =
                 [&]() {
                     ImGui::ShowDemoWindow(); // This opens a window which shows tons of examples of what you can do with ImGui. You should check it out! Also, you can use the "Item Picker" in the top menu of that demo window: then click on any widget and it will show you the corresponding code directly in your IDE!
