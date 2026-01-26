@@ -42,6 +42,10 @@ int main()
 
                     // Chess board
                     ImGui::Begin("Chess board");
+
+                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 0.f));
+                    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 0.f));
+
                     float button_size = 50.f;
                     for (int row = 0; row < 8; row++)
                     {
@@ -65,6 +69,7 @@ int main()
                             }
                         }
                     }
+                    ImGui::PopStyleVar(2);
                     ImGui::End();
                 },
         }
