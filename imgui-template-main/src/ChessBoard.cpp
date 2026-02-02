@@ -27,7 +27,17 @@ void ChessBoard::drawBoard()
             ImVec4 color   = isWhite ? CHESS_LIGHT : CHESS_DARK;
             ImGui::PushStyleColor(ImGuiCol_Button, color);
             ImGui::PushID(row * 8 + col);
-            if (ImGui::Button("", ImVec2(button_size, button_size)))
+
+            ImGui::PushFont(chessFont);
+            const char* label = "";
+            if (row == 1)
+                label = "o"; // Pion noir
+            if (row == 6)
+                label = "p"; // Pion blanc
+            if (row == 0 && (col == 0 || col == 7))
+                label = "t"; // Tours noires
+
+            if (ImGui::Button(label, ImVec2(button_size, button_size)))
             {
                 char colLetter = 'a' + col;
                 int  rowNumber = 8 - row;
@@ -35,6 +45,8 @@ void ChessBoard::drawBoard()
             }
             ImGui::PopID();
             ImGui::PopStyleColor();
+            ImGui::PopFont();
+
             if (col < 7)
             {
                 ImGui::SameLine();
