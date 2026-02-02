@@ -11,7 +11,7 @@ void ChessBoard::drawBoard()
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 0.f));
 
     const ImVec4 CHESS_LIGHT = ImVec4(1.0f, 0.871f, 0.455f, 1.0f);
-    const ImVec4 CHESS_DARK = ImVec4(0.804f, 0.510f, 0.247f, 1.0f);
+    const ImVec4 CHESS_DARK  = ImVec4(0.804f, 0.510f, 0.247f, 1.0f);
 
     ImVec2 avail       = ImGui::GetContentRegionAvail();
     float  boardWidth  = avail.x;
@@ -28,40 +28,46 @@ void ChessBoard::drawBoard()
             ImGui::PushStyleColor(ImGuiCol_Button, color);
             ImGui::PushID(row * 8 + col);
 
-            // ImGui::PushFont(chessFont);
-            const char* label = "";
-            ImVec4 pieceColor = ImVec4(1.f, 1.f, 1.f, 1.f); // Blanc par défaut
-            // if (row == 1)
-            //     label = "o"; // Pion noir
-            // if (row == 6)
-            //     label = "p"; // Pion blanc
-            // if (row == 0 && (col == 0 || col == 7))
-            //     label = "t"; // Tours noires
+            const char* label      = "";
+            ImVec4      pieceColor = ImVec4(1.f, 1.f, 1.f, 1.f); // Blanc par défaut
 
-            // PIÈCES NOIRES (Rangées 0 et 1)
-            if (row == 0 || row == 1) {
+            if (row == 0 || row == 1)
+            {
                 pieceColor = ImVec4(0.0f, 0.0f, 0.0f, 1.0f); // Texte Noir pur
-                if (row == 1) label = "o"; // Pion noir
-                else if (col == 0 || col == 7) label = "t"; // Tour noire
-                else if (col == 1 || col == 6) label = "m"; // Cavalier noir
-                else if (col == 2 || col == 5) label = "v"; // Fou noir
-                else if (col == 3) label = "w";             // Dame noire
-                else if (col == 4) label = "l";             // Roi noir
+                if (row == 1)
+                    label = "o"; // Pion noir
+                else if (col == 0 || col == 7)
+                    label = "t"; // Tour noire
+                else if (col == 1 || col == 6)
+                    label = "m"; // Cavalier noir
+                else if (col == 2 || col == 5)
+                    label = "v"; // Fou noir
+                else if (col == 3)
+                    label = "w"; // Dame noire
+                else if (col == 4)
+                    label = "l"; // Roi noir
             }
-            // PIÈCES BLANCHES (Rangées 6 et 7)
-            else if (row == 6 || row == 7) {
+
+            else if (row == 6 || row == 7)
+            {
                 pieceColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); // Texte Blanc pur
-                if (row == 6) label = "p"; // Pion blanc
-                else if (col == 0 || col == 7) label = "r"; // Tour blanche
-                else if (col == 1 || col == 6) label = "n"; // Cavalier blanc
-                else if (col == 2 || col == 5) label = "b"; // Fou blanc
-                else if (col == 3) label = "q";             // Dame blanche
-                else if (col == 4) label = "k";             // Roi blanc
+                if (row == 6)
+                    label = "p"; // Pion blanc
+                else if (col == 0 || col == 7)
+                    label = "r"; // Tour blanche
+                else if (col == 1 || col == 6)
+                    label = "n"; // Cavalier blanc
+                else if (col == 2 || col == 5)
+                    label = "b"; // Fou blanc
+                else if (col == 3)
+                    label = "q"; // Dame blanche
+                else if (col == 4)
+                    label = "k"; // Roi blanc
             }
 
             ImGui::PushStyleColor(ImGuiCol_Text, pieceColor);
+            ImGui::SetWindowFontScale(0.5);
             ImGui::PushFont(chessFont);
-
 
             if (ImGui::Button(label, ImVec2(button_size, button_size)))
             {
@@ -72,6 +78,7 @@ void ChessBoard::drawBoard()
             ImGui::PopID();
             ImGui::PopStyleColor(2);
             ImGui::PopFont();
+            ImGui::SetWindowFontScale(1.f);
 
             if (col < 7)
             {
