@@ -14,7 +14,7 @@ int main()
             .init = [&]() {
                 ImGuiIO& io = ImGui::GetIO();
                 io.Fonts->AddFontDefault();
-                io.Fonts->AddFontFromFileTTF((std::string(CMAKE_SOURCE_DIR) + "/assets/fonts/MAGNFONT.TTF").c_str(), 40.0f);
+                io.Fonts->AddFontFromFileTTF((std::string(CMAKE_SOURCE_DIR) + "/assets/fonts/MAGNFONT.TTF").c_str(), 60.0f);
                 io.Fonts->Build();
                 chessFont = io.Fonts->Fonts[1]; // Get the chess font we just loaded
             },
