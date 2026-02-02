@@ -1,7 +1,9 @@
 #include <imgui.h>
 #include <algorithm>
 #include <iostream>
+#include "ChessBoard.hpp"
 #include "quick_imgui/quick_imgui.hpp"
+
 
 int main()
 {
@@ -13,10 +15,9 @@ int main()
             .init = [&]() {
                 // ImGuiIO& io = ImGui::GetIO();
                 // io.Fonts->AddFontFromFileTTF("assets/fonts/Alpha.ttf", 16.0f);
-                // io.Fonts->Build(); 
+                // io.Fonts->Build();
             },
-            .loop =
-                [&]() {
+            .loop = [&]() {
                     ImGui::ShowDemoWindow(); // This opens a window which shows tons of examples of what you can do with ImGui. You should check it out! Also, you can use the "Item Picker" in the top menu of that demo window: then click on any widget and it will show you the corresponding code directly in your IDE!
 
                     ImGui::Begin("Example");
@@ -44,47 +45,7 @@ int main()
                     ImGui::PopStyleColor();
 
                     ImGui::End();
-
-                    // Chess board
-                    ImGui::Begin("Chess board");
-
-                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 0.f));
-                    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 0.f));
-
-                    const ImVec4 CHESS_LIGHT = ImVec4(0.93f, 0.93f, 0.82f, 1.0f);
-                    const ImVec4 CHESS_DARK  = ImVec4(0.46f, 0.59f, 0.34f, 1.0f);
-
-                    ImVec2 avail       = ImGui::GetContentRegionAvail();
-                    float  boardWidth  = avail.x;
-                    float  boardHeight = avail.y;
-                    float  boardSize   = std::min(boardWidth, boardHeight);
-                    float  button_size = boardSize / 8.0f;
-
-                    for (int row = 0; row < 8; row++)
-                    {
-                        for (int col = 0; col < 8; col++)
-                        {
-                            bool   isWhite = (row + col) % 2 == 0;
-                            ImVec4 color   = isWhite ? CHESS_LIGHT : CHESS_DARK;
-                            ImGui::PushStyleColor(ImGuiCol_Button, color);
-                            ImGui::PushID(row * 8 + col);
-                            if (ImGui::Button("", ImVec2(button_size, button_size)))
-                            {
-                                char colLetter = 'a' + col;
-                                int  rowNumber = 8 - row;
-                                std::cout << "Clicked square: " << rowNumber << colLetter << "\n";
-                            }
-                            ImGui::PopID();
-                            ImGui::PopStyleColor();
-                            if (col < 7)
-                            {
-                                ImGui::SameLine();
-                            }
-                        }
-                    }
-                    ImGui::PopStyleVar(2);
-                    ImGui::End();
-                },
+                    ChessBoard::drawBoard(); },
         }
     );
 }
