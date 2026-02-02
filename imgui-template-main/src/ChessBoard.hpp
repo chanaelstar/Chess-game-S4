@@ -5,4 +5,4 @@ namespace ChessBoard {
 void drawBoard();
 
 }
-   inline ImFont* chessFont = nullptr;
+inline ImFont* chessFont = nullptr;

@@ -4,7 +4,6 @@
 #include "ChessBoard.hpp"
 #include "quick_imgui/quick_imgui.hpp"
 
-
 int main()
 {
     float value{0.f};
@@ -13,11 +12,11 @@ int main()
         "Chess",
         {
             .init = [&]() {
-                    ImGuiIO& io = ImGui::GetIO();
-                    io.Fonts->AddFontDefault();
-                    io.Fonts->AddFontFromFileTTF("C:/Users/chana/Documents/3.IMAC2/S4/Programmation_Objet_2/Chess-game-S4/imgui-template-main/assets/fonts/MAGNFONT.TTF", 40.0f);
-                    io.Fonts->Build(); 
-                    chessFont = io.Fonts->Fonts[1]; // Get the chess font we just loaded
+                ImGuiIO& io = ImGui::GetIO();
+                io.Fonts->AddFontDefault();
+                io.Fonts->AddFontFromFileTTF((std::string(CMAKE_SOURCE_DIR) + "/assets/fonts/MAGNFONT.TTF").c_str(), 40.0f);
+                io.Fonts->Build();
+                chessFont = io.Fonts->Fonts[1]; // Get the chess font we just loaded
             },
             .loop = [&]() {
                     ImGui::ShowDemoWindow(); // This opens a window which shows tons of examples of what you can do with ImGui. You should check it out! Also, you can use the "Item Picker" in the top menu of that demo window: then click on any widget and it will show you the corresponding code directly in your IDE!

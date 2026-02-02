@@ -17,6 +17,9 @@ add_executable(${PROJECT_NAME})
 # Choose your C++ version
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    CMAKE_SOURCE_DIR=\"${CMAKE_SOURCE_DIR}\"
+)
 # Enable many good warnings.
 # /WX and -Werror enable "warnings as errors": This means that your code won't compile if you have any warning.
 # This forces you to take warnings into account, which is a good practice because warnings are here for a reason and can save you from a lot of bugs!
