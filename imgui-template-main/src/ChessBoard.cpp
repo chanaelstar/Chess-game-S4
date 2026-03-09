@@ -69,7 +69,7 @@ void ChessBoard::drawBoard()
 
     const ImVec4 CHESS_DARK = ImVec4(0.804f, 0.510f, 0.247f, 1.0f);
 
-    const ImVec4 HIGHLIGHT = ImVec4(1.f, 0.f, 0.f, 1.f);
+    const ImVec4 HIGHLIGHT = ImVec4(0.415f, 0.658f, 0.309f, 1.f);
 
     float boardSize = std::min(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
 
