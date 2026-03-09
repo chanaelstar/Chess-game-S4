@@ -5,6 +5,8 @@
 
 int main()
 {
+    ChessBoard gameBoard;
+
     float value{0.f};
 
     quick_imgui::loop(
@@ -44,8 +46,6 @@ int main()
             ImGui::PopStyleColor();
 
             ImGui::End();
-            ChessBoard gameBoard;
-            gameBoard.resetBoard();
             gameBoard.drawBoard(); }}
     );
 

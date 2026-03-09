@@ -5,10 +5,13 @@
 class ChessBoard {
 private:
     std::array<std::array<Piece, 8>, 8> m_grid;
+    int                                 selectedRow = -1;
+    int                                 selectedCol = -1;
 
 public:
     ChessBoard();
     void resetBoard();
     void drawBoard();
+    void setSelectedSquare(int row, int col);
 };
 inline ImFont* chessFont = nullptr;
