@@ -90,13 +90,22 @@ if (ImGui::Button(piece.getSymbol(), ImVec2(button_size, button_size)))
     }
     else if (selectedRow != -1) // pièce déjà sélectionnée
     {
-        // Déplacement de la pièce
-        m_grid[row][col] = m_grid[selectedRow][selectedCol];
-        m_grid[selectedRow][selectedCol] = Piece(PieceType::None, PieceColor::None);
-        std::cout << "Piece moved to: " << (8 - row) << (char)('a' + col) << "\n";
-        
-        // Désélectionner
-        setSelectedSquare(-1, -1);
+        // Si on clique sur la même case: désélectionner
+        if (selectedRow == row && selectedCol == col)
+        {
+            setSelectedSquare(-1, -1);
+            std::cout << "Piece deselected\n";
+        }
+        else
+        {
+            // Déplacement de la pièce
+            m_grid[row][col] = m_grid[selectedRow][selectedCol];
+            m_grid[selectedRow][selectedCol] = Piece(PieceType::None, PieceColor::None);
+            std::cout << "Piece moved to: " << (8 - row) << (char)('a' + col) << "\n";
+            
+            // Enlève la sélection après le déplacement
+            setSelectedSquare(-1, -1);
+        }
     }
 }
 
