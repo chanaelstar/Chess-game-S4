@@ -13,5 +13,6 @@ public:
     void resetBoard();
     void drawBoard();
     void setSelectedSquare(int row, int col);
+    void movePiece(int fromRow, int fromCol, int toRow, int toCol);
 };
 inline ImFont* chessFont = nullptr;
