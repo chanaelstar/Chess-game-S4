@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include "Piece/Bishop.hpp"
+#include "Piece/King.hpp"
 
 ChessBoard::ChessBoard() : selectedRow(-1), selectedCol(-1)
 {
@@ -39,6 +40,8 @@ void ChessBoard::resetBoard()
         m_grid[0][5] = new Bishop(PieceColor::Black);
         m_grid[7][2] = new Bishop(PieceColor::White);
         m_grid[7][5] = new Bishop(PieceColor::White);
+        m_grid[0][4] = new King(PieceColor::Black);
+        m_grid[7][4] = new King(PieceColor::White);
         // Ici ajouter les autres pièces lors de l'implémentation
     }
 }
