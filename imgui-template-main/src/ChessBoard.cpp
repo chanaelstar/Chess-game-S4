@@ -4,8 +4,11 @@
 #include <iostream>
 #include "Piece/Bishop.hpp"
 #include "Piece/King.hpp"
-#include "Piece/Rook.hpp"
 #include "Piece/Knight.hpp"
+#include "Piece/Pawn.hpp"
+#include "Piece/Queen.hpp"
+#include "Piece/Rook.hpp"
+
 
 ChessBoard::ChessBoard() : selectedRow(-1), selectedCol(-1)
 {
@@ -44,6 +47,8 @@ void ChessBoard::resetBoard()
         m_grid[7][5] = new Bishop(PieceColor::White);
         m_grid[0][4] = new King(PieceColor::Black);
         m_grid[7][4] = new King(PieceColor::White);
+        m_grid[0][3] = new Queen(PieceColor::Black);
+        m_grid[7][3] = new Queen(PieceColor::White);
         m_grid[0][0] = new Rook(PieceColor::Black);
         m_grid[0][7] = new Rook(PieceColor::Black);
         m_grid[7][0] = new Rook(PieceColor::White);
@@ -52,6 +57,23 @@ void ChessBoard::resetBoard()
         m_grid[0][6] = new Knight(PieceColor::Black);
         m_grid[7][1] = new Knight(PieceColor::White);
         m_grid[7][6] = new Knight(PieceColor::White);
+        m_grid[1][0] = new Pawn(PieceColor::Black);
+        m_grid[1][1] = new Pawn(PieceColor::Black);
+        m_grid[1][2] = new Pawn(PieceColor::Black);
+        m_grid[1][3] = new Pawn(PieceColor::Black);
+        m_grid[1][4] = new Pawn(PieceColor::Black);
+        m_grid[1][5] = new Pawn(PieceColor::Black);
+        m_grid[1][6] = new Pawn(PieceColor::Black);
+        m_grid[1][7] = new Pawn(PieceColor::Black);
+        m_grid[6][0] = new Pawn(PieceColor::White);
+        m_grid[6][1] = new Pawn(PieceColor::White);
+        m_grid[6][2] = new Pawn(PieceColor::White);
+        m_grid[6][3] = new Pawn(PieceColor::White);
+        m_grid[6][4] = new Pawn(PieceColor::White);
+        m_grid[6][5] = new Pawn(PieceColor::White);
+        m_grid[6][6] = new Pawn(PieceColor::White);
+        m_grid[6][7] = new Pawn(PieceColor::White);
+
         // Ici ajouter les autres pièces lors de l'implémentation
     }
 }
@@ -77,11 +99,11 @@ void ChessBoard::drawBoard()
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 0.f));
     const ImVec4 CHESS_LIGHT = ImVec4(1.0f, 0.871f, 0.455f, 1.0f);
     const ImVec4 CHESS_DARK  = ImVec4(0.804f, 0.510f, 0.247f, 1.0f);
-    const ImVec4 HIGHLIGHT   = ImVec4(0.415f, 0.658f, 0.309f, 1.f);
+    const ImVec4 HIGHLIGHT   = ImVec4(0.415f, 0.658f, 0.309f, 1.0f);
     float        boardSize   = std::min(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
     float        button_size = boardSize / 8.0f;
 
-    const ImVec4                     VALID_MOVE = ImVec4(0.5f, 0.7f, 1.0f, 0.6f);
+    const ImVec4                     VALID_MOVE = ImVec4(0.5f, 0.7f, 1.0f, 1.0f);
     std::vector<std::pair<int, int>> validMoves;
     if (selectedRow != -1)
         validMoves = getValidMoves(selectedRow, selectedCol);
