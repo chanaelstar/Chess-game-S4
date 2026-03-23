@@ -5,6 +5,7 @@
 #include "Piece/Bishop.hpp"
 #include "Piece/King.hpp"
 #include "Piece/Rook.hpp"
+#include "Piece/Knight.hpp"
 
 ChessBoard::ChessBoard() : selectedRow(-1), selectedCol(-1)
 {
@@ -47,6 +48,10 @@ void ChessBoard::resetBoard()
         m_grid[0][7] = new Rook(PieceColor::Black);
         m_grid[7][0] = new Rook(PieceColor::White);
         m_grid[7][7] = new Rook(PieceColor::White);
+        m_grid[0][1] = new Knight(PieceColor::Black);
+        m_grid[0][6] = new Knight(PieceColor::Black);
+        m_grid[7][1] = new Knight(PieceColor::White);
+        m_grid[7][6] = new Knight(PieceColor::White);
         // Ici ajouter les autres pièces lors de l'implémentation
     }
 }
