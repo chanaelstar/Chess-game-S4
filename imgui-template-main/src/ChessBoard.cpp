@@ -85,11 +85,21 @@ void ChessBoard::drawBoard()
     float        boardSize   = std::min(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
     float        button_size = boardSize / 8.0f;
 
-    const ImVec4                     VALID_MOVE = ImVec4(0.5f, 0.7f, 1.0f, 1.0f);
+    const ImVec4                     VALID_MOVE = ImVec4(0.098f, 0.518f, 0.800f, 0.600f);
     std::vector<std::pair<int, int>> validMoves;
     if (selectedRow != -1)
         validMoves = getValidMoves(selectedRow, selectedCol);
 
+    // Fonction de mélange pour les cases de mouvement valide
+    // auto Blend = [](ImVec4 source, ImVec4 dest, float alpha) -> ImVec4 {
+    //     return ImVec4(
+    //         source.x * alpha + dest.x * (1.0f - alpha),
+    //         source.y * alpha + dest.y * (1.0f - alpha),
+    //         source.z * alpha + dest.z * (1.0f - alpha),
+    //         1.0f
+    //     );
+    // };
+    
     for (int row = 0; row < 8; row++)
     {
         for (int col = 0; col < 8; col++)
@@ -99,10 +109,9 @@ void ChessBoard::drawBoard()
             bool isWhite    = (row + col) % 2 == 0;
             bool isSelected = (row == selectedRow && col == selectedCol);
 
-            bool   isValidMove = std::find(validMoves.begin(), validMoves.end(), std::make_pair(row, col)) != validMoves.end();
-            ImVec4 background  = isSelected    ? HIGHLIGHT
-                                 : isValidMove ? VALID_MOVE
-                                               : (isWhite ? CHESS_LIGHT : CHESS_DARK);
+           bool   isValidMove = std::find(validMoves.begin(), validMoves.end(), std::make_pair(row, col)) != validMoves.end();
+            ImVec4 baseColor   = isWhite ? CHESS_LIGHT : CHESS_DARK;
+            ImVec4 background  = isSelected ? HIGHLIGHT : baseColor;
             ImGui::PushStyleColor(ImGuiCol_Button, background);
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, background);
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, background);
@@ -146,6 +155,13 @@ void ChessBoard::drawBoard()
                     }
                 }
             }
+
+            if (isValidMove)
+            {
+            ImVec2 buttonMin = ImGui::GetItemRectMin();
+            ImVec2 buttonMax = ImGui::GetItemRectMax();
+            ImGui::GetWindowDrawList()->AddRect(buttonMin, buttonMax, ImGui::GetColorU32(ImVec4(0.098f, 0.518f, 0.800f, 1.0f)), 0.0f, ImDrawFlags_None, 10.0f);            
+        }
 
             ImGui::PopFont();
             ImGui::PopID();
