@@ -9,7 +9,6 @@
 #include "Piece/Queen.hpp"
 #include "Piece/Rook.hpp"
 
-
 ChessBoard::ChessBoard() : selectedRow(-1), selectedCol(-1)
 {
     resetBoard();
@@ -40,41 +39,24 @@ void ChessBoard::resetBoard()
     for (int row = 0; row < 8; ++row)
         for (int col = 0; col < 8; ++col)
             m_grid[row][col] = nullptr;
-    {
-        m_grid[0][2] = new Bishop(PieceColor::Black);
-        m_grid[0][5] = new Bishop(PieceColor::Black);
-        m_grid[7][2] = new Bishop(PieceColor::White);
-        m_grid[7][5] = new Bishop(PieceColor::White);
-        m_grid[0][4] = new King(PieceColor::Black);
-        m_grid[7][4] = new King(PieceColor::White);
-        m_grid[0][3] = new Queen(PieceColor::Black);
-        m_grid[7][3] = new Queen(PieceColor::White);
-        m_grid[0][0] = new Rook(PieceColor::Black);
-        m_grid[0][7] = new Rook(PieceColor::Black);
-        m_grid[7][0] = new Rook(PieceColor::White);
-        m_grid[7][7] = new Rook(PieceColor::White);
-        m_grid[0][1] = new Knight(PieceColor::Black);
-        m_grid[0][6] = new Knight(PieceColor::Black);
-        m_grid[7][1] = new Knight(PieceColor::White);
-        m_grid[7][6] = new Knight(PieceColor::White);
-        m_grid[1][0] = new Pawn(PieceColor::Black);
-        m_grid[1][1] = new Pawn(PieceColor::Black);
-        m_grid[1][2] = new Pawn(PieceColor::Black);
-        m_grid[1][3] = new Pawn(PieceColor::Black);
-        m_grid[1][4] = new Pawn(PieceColor::Black);
-        m_grid[1][5] = new Pawn(PieceColor::Black);
-        m_grid[1][6] = new Pawn(PieceColor::Black);
-        m_grid[1][7] = new Pawn(PieceColor::Black);
-        m_grid[6][0] = new Pawn(PieceColor::White);
-        m_grid[6][1] = new Pawn(PieceColor::White);
-        m_grid[6][2] = new Pawn(PieceColor::White);
-        m_grid[6][3] = new Pawn(PieceColor::White);
-        m_grid[6][4] = new Pawn(PieceColor::White);
-        m_grid[6][5] = new Pawn(PieceColor::White);
-        m_grid[6][6] = new Pawn(PieceColor::White);
-        m_grid[6][7] = new Pawn(PieceColor::White);
 
-        // Ici ajouter les autres pièces lors de l'implémentation
+    auto placeMainRow = [&](int row, PieceColor color) {
+        m_grid[row][0] = new Rook(color);
+        m_grid[row][1] = new Knight(color);
+        m_grid[row][2] = new Bishop(color);
+        m_grid[row][3] = new Queen(color);
+        m_grid[row][4] = new King(color);
+        m_grid[row][5] = new Bishop(color);
+        m_grid[row][6] = new Knight(color);
+        m_grid[row][7] = new Rook(color);
+    };
+
+    placeMainRow(0, PieceColor::Black);
+    placeMainRow(7, PieceColor::White);
+    for (int col = 0; col < 8; ++col)
+    {
+        m_grid[1][col] = new Pawn(PieceColor::Black);
+        m_grid[6][col] = new Pawn(PieceColor::White);
     }
 }
 std::vector<std::pair<int, int>> ChessBoard::getValidMoves(int row, int col) const
