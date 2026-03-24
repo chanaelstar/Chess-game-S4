@@ -74,7 +74,7 @@ std::vector<std::pair<int, int>> ChessBoard::getValidMoves(int row, int col) con
     return moves;
 }
 
-void ChessBoard::drawBoard()
+bool ChessBoard::drawBoard(PieceColor currentPlayer)
 {
     ImGui::Begin("Chess board");
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 0.f));
@@ -87,19 +87,11 @@ void ChessBoard::drawBoard()
 
     const ImVec4                     VALID_MOVE = ImVec4(0.098f, 0.518f, 0.800f, 0.600f);
     std::vector<std::pair<int, int>> validMoves;
+    bool                             moved = false;
+
     if (selectedRow != -1)
         validMoves = getValidMoves(selectedRow, selectedCol);
 
-    // Fonction de mélange pour les cases de mouvement valide
-    // auto Blend = [](ImVec4 source, ImVec4 dest, float alpha) -> ImVec4 {
-    //     return ImVec4(
-    //         source.x * alpha + dest.x * (1.0f - alpha),
-    //         source.y * alpha + dest.y * (1.0f - alpha),
-    //         source.z * alpha + dest.z * (1.0f - alpha),
-    //         1.0f
-    //     );
-    // };
-    
     for (int row = 0; row < 8; row++)
     {
         for (int col = 0; col < 8; col++)
@@ -109,7 +101,7 @@ void ChessBoard::drawBoard()
             bool isWhite    = (row + col) % 2 == 0;
             bool isSelected = (row == selectedRow && col == selectedCol);
 
-           bool   isValidMove = std::find(validMoves.begin(), validMoves.end(), std::make_pair(row, col)) != validMoves.end();
+            bool   isValidMove = std::find(validMoves.begin(), validMoves.end(), std::make_pair(row, col)) != validMoves.end();
             ImVec4 baseColor   = isWhite ? CHESS_LIGHT : CHESS_DARK;
             ImVec4 background  = isSelected ? HIGHLIGHT : baseColor;
             ImGui::PushStyleColor(ImGuiCol_Button, background);
@@ -131,7 +123,7 @@ void ChessBoard::drawBoard()
             {
                 if (promotionRow == -1) // bloquer les interactions pendant la promotion
                 {
-                    if (selectedRow == -1 && piece != nullptr)
+                    if (selectedRow == -1 && piece != nullptr && piece->getColor() == currentPlayer)
                     {
                         setSelectedSquare(row, col);
                     }
@@ -147,6 +139,8 @@ void ChessBoard::drawBoard()
                             if (moving->isValidMove(selectedRow, selectedCol, row, col, m_grid))
                             {
                                 movePiece(selectedRow, selectedCol, row, col);
+                                moved = true;
+
                                 // Vérifier si un pion a atteint la dernière rangée
                                 Piece* moved = m_grid[row][col];
                                 if (moved && moved->getType() == PieceType::Pawn)
@@ -173,10 +167,10 @@ void ChessBoard::drawBoard()
 
             if (isValidMove)
             {
-            ImVec2 buttonMin = ImGui::GetItemRectMin();
-            ImVec2 buttonMax = ImGui::GetItemRectMax();
-            ImGui::GetWindowDrawList()->AddRect(buttonMin, buttonMax, ImGui::GetColorU32(ImVec4(0.098f, 0.518f, 0.800f, 1.0f)), 0.0f, ImDrawFlags_None, 10.0f);            
-        }
+                ImVec2 buttonMin = ImGui::GetItemRectMin();
+                ImVec2 buttonMax = ImGui::GetItemRectMax();
+                ImGui::GetWindowDrawList()->AddRect(buttonMin, buttonMax, ImGui::GetColorU32(ImVec4(0.098f, 0.518f, 0.800f, 1.0f)), 0.0f, ImDrawFlags_None, 10.0f);
+            }
 
             ImGui::PopFont();
             ImGui::PopID();
@@ -211,16 +205,20 @@ void ChessBoard::drawBoard()
             ImGui::CloseCurrentPopup();
         };
 
-        if (ImGui::Button("Dame",    ImVec2(110, 40))) promote(new Queen(color));
+        if (ImGui::Button("Dame", ImVec2(110, 40)))
+            promote(new Queen(color));
         ImGui::SameLine();
-        if (ImGui::Button("Tour",    ImVec2(110, 40))) promote(new Rook(color));
+        if (ImGui::Button("Tour", ImVec2(110, 40)))
+            promote(new Rook(color));
         ImGui::SameLine();
-        if (ImGui::Button("Fou",     ImVec2(110, 40))) promote(new Bishop(color));
+        if (ImGui::Button("Fou", ImVec2(110, 40)))
+            promote(new Bishop(color));
         ImGui::SameLine();
-        if (ImGui::Button("Cavalier", ImVec2(110, 40))) promote(new Knight(color));
+        if (ImGui::Button("Cavalier", ImVec2(110, 40)))
+            promote(new Knight(color));
 
         ImGui::EndPopup();
     }
-
     ImGui::End();
+    return moved;
 }

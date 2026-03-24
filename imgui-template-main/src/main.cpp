@@ -1,12 +1,11 @@
 #include <imgui.h>
 #include <iostream>
-#include "ChessBoard.hpp"
+#include "Game.hpp"
 #include "quick_imgui/quick_imgui.hpp"
 
 int main()
 {
-    ChessBoard gameBoard;
-
+    Game  game;
     float value{0.f};
 
     quick_imgui::loop(
@@ -46,7 +45,7 @@ int main()
             ImGui::PopStyleColor();
 
             ImGui::End();
-            gameBoard.drawBoard(); }}
+             game.update(); }}
     );
 
     return 0;

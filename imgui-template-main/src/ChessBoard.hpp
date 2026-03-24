@@ -16,7 +16,7 @@ private:
 public:
     ChessBoard();
     void                             resetBoard();
-    void                             drawBoard();
+    bool                             drawBoard(PieceColor currentPlayer);
     void                             setSelectedSquare(int row, int col);
     void                             movePiece(int fromRow, int fromCol, int toRow, int toCol);
     std::vector<std::pair<int, int>> getValidMoves(int row, int col) const;
