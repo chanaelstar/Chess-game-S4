@@ -74,6 +74,26 @@ std::vector<std::pair<int, int>> ChessBoard::getValidMoves(int row, int col) con
     return moves;
 }
 
+PieceColor ChessBoard::getWinner() const
+{
+    bool whiteKingAlive = false;
+    bool blackKingAlive = false;
+    for (int r = 0; r < 8; ++r)
+        for (int c = 0; c < 8; ++c)
+            if (m_grid[r][c] && m_grid[r][c]->getType() == PieceType::King)
+            {
+                if (m_grid[r][c]->getColor() == PieceColor::White)
+                    whiteKingAlive = true;
+                else
+                    blackKingAlive = true;
+            }
+    if (!blackKingAlive)
+        return PieceColor::White;
+    if (!whiteKingAlive)
+        return PieceColor::Black;
+    return PieceColor::None;
+}
+
 bool ChessBoard::drawBoard(PieceColor currentPlayer)
 {
     ImGui::Begin("Chess board");

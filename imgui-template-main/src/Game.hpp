@@ -10,6 +10,8 @@ public:
 private:
     ChessBoard m_board;
     PieceColor m_currentPlayer;
+    PieceColor m_winner = PieceColor::None;
 
     void switchPlayer();
+    void drawVictoryPopup();
 };

@@ -20,5 +20,6 @@ public:
     void                             setSelectedSquare(int row, int col);
     void                             movePiece(int fromRow, int fromCol, int toRow, int toCol);
     std::vector<std::pair<int, int>> getValidMoves(int row, int col) const;
+    PieceColor                       getWinner() const;
 };
 inline ImFont* chessFont = nullptr;
