@@ -129,29 +129,44 @@ void ChessBoard::drawBoard()
 
             if (ImGui::Button(symbol, ImVec2(button_size, button_size)))
             {
-                if (selectedRow == -1 && piece != nullptr)
+                if (promotionRow == -1) // bloquer les interactions pendant la promotion
                 {
-                    setSelectedSquare(row, col);
-                }
-                else if (selectedRow != -1)
-                {
-                    if (selectedRow == row && selectedCol == col)
+                    if (selectedRow == -1 && piece != nullptr)
                     {
-                        setSelectedSquare(-1, -1);
+                        setSelectedSquare(row, col);
                     }
-                    else
+                    else if (selectedRow != -1)
                     {
-                        Piece* moving = m_grid[selectedRow][selectedCol];
-                        if (moving->isValidMove(selectedRow, selectedCol, row, col, m_grid))
+                        if (selectedRow == row && selectedCol == col)
                         {
-                            movePiece(selectedRow, selectedCol, row, col);
-                            std::cout << "Piece moved to: " << (8 - row) << (char)('a' + col) << "\n";
+                            setSelectedSquare(-1, -1);
                         }
                         else
                         {
-                            std::cout << "Invalid move!\n";
+                            Piece* moving = m_grid[selectedRow][selectedCol];
+                            if (moving->isValidMove(selectedRow, selectedCol, row, col, m_grid))
+                            {
+                                movePiece(selectedRow, selectedCol, row, col);
+                                // Vérifier si un pion a atteint la dernière rangée
+                                Piece* moved = m_grid[row][col];
+                                if (moved && moved->getType() == PieceType::Pawn)
+                                {
+                                    bool whitePromotion = (moved->getColor() == PieceColor::White && row == 0);
+                                    bool blackPromotion = (moved->getColor() == PieceColor::Black && row == 7);
+                                    if (whitePromotion || blackPromotion)
+                                    {
+                                        promotionRow = row;
+                                        promotionCol = col;
+                                    }
+                                }
+                                std::cout << "Piece moved to: " << (8 - row) << (char)('a' + col) << "\n";
+                            }
+                            else
+                            {
+                                std::cout << "Invalid move!\n";
+                            }
+                            setSelectedSquare(-1, -1);
                         }
-                        setSelectedSquare(-1, -1);
                     }
                 }
             }
@@ -174,5 +189,38 @@ void ChessBoard::drawBoard()
     }
 
     ImGui::PopStyleVar(2);
+
+    // Ouvrir la modale si une promotion est en attente
+    if (promotionRow != -1 && !ImGui::IsPopupOpen("Promotion"))
+        ImGui::OpenPopup("Promotion");
+
+    // Fenêtre modale de promotion du pion
+    ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    if (ImGui::BeginPopupModal("Promotion", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+    {
+        ImGui::Text("Choisissez une piece pour la promotion :");
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        PieceColor color = m_grid[promotionRow][promotionCol]->getColor();
+
+        auto promote = [&](Piece* newPiece) {
+            delete m_grid[promotionRow][promotionCol];
+            m_grid[promotionRow][promotionCol] = newPiece;
+            promotionRow = promotionCol = -1;
+            ImGui::CloseCurrentPopup();
+        };
+
+        if (ImGui::Button("Dame",    ImVec2(110, 40))) promote(new Queen(color));
+        ImGui::SameLine();
+        if (ImGui::Button("Tour",    ImVec2(110, 40))) promote(new Rook(color));
+        ImGui::SameLine();
+        if (ImGui::Button("Fou",     ImVec2(110, 40))) promote(new Bishop(color));
+        ImGui::SameLine();
+        if (ImGui::Button("Cavalier", ImVec2(110, 40))) promote(new Knight(color));
+
+        ImGui::EndPopup();
+    }
+
     ImGui::End();
 }

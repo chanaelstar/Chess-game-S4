@@ -8,8 +8,10 @@
 class ChessBoard {
 private:
     std::array<std::array<Piece*, 8>, 8> m_grid;
-    int                                  selectedRow = -1;
-    int                                  selectedCol = -1;
+    int                                  selectedRow  = -1;
+    int                                  selectedCol  = -1;
+    int                                  promotionRow = -1;
+    int                                  promotionCol = -1;
 
 public:
     ChessBoard();
