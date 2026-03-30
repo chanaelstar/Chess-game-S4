@@ -28,12 +28,28 @@ void Game::drawVictoryPopup()
             m_winner        = PieceColor::None;
             ImGui::CloseCurrentPopup();
         }
+        ImGui::SameLine();
+        if (ImGui::Button("Menu", ImVec2(80, 40)))
+        {
+            m_board.resetBoard();
+            m_currentPlayer = PieceColor::White;
+            m_winner        = PieceColor::None;
+            m_interface.backToMenu();
+            ImGui::CloseCurrentPopup();
+        }
         ImGui::EndPopup();
     }
 }
 
+// Quand fin de partie
 void Game::update()
 {
+    if (m_interface.getAppState() == AppState::Menu)
+    {
+        m_interface.drawMenu();
+        return;
+    }
+
     if (m_board.drawBoard(m_currentPlayer))
     {
         m_winner = m_board.getWinner();
