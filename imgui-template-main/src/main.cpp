@@ -1,4 +1,5 @@
 #include <glad/glad.h>
+#include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <glimac/Program.hpp>
 #include <glimac/Sphere.hpp>
@@ -120,6 +121,8 @@ int main(int argc, char* argv[])
 
              ImGui::End();
              game.update();
+             if (game.shouldQuit())
+                 glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
 
              // OPENGL
              glClearColor(1.f, 0.5f, 0.5f, 1.f);

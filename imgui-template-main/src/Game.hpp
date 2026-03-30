@@ -7,6 +7,7 @@ class Game {
 public:
     Game();
     void update();
+    bool shouldQuit() const { return m_interface.getAppState() == AppState::Exit; }
 
 private:
     Interface  m_interface;
