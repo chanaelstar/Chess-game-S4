@@ -1,7 +1,17 @@
 #include "Game.hpp"
 #include <imgui.h>
 
-Game::Game() : m_currentPlayer(PieceColor::White) {}
+Game::Game()
+    : m_currentPlayer(PieceColor::White) {}
+
+void Game::init()
+{
+    m_renderer.init();
+}
+void Game::onWindowResize(int w, int h)
+{
+    m_renderer.onWindowResize(w, h);
+}
 
 void Game::switchPlayer()
 {
@@ -49,7 +59,7 @@ void Game::update()
         m_interface.drawMenu();
         return;
     }
-
+    m_renderer.draw(m_board);
     if (m_board.drawBoard(m_currentPlayer))
     {
         m_winner = m_board.getWinner();

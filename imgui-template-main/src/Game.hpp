@@ -1,4 +1,5 @@
 #pragma once
+#include "3D/Renderer.hpp"
 #include "ChessBoard.hpp"
 #include "Piece.hpp"
 #include "UI/Interface.hpp"
@@ -6,14 +7,18 @@
 class Game {
 public:
     Game();
+    void init();
     void update();
-    bool shouldQuit() const { return m_interface.getAppState() == AppState::Exit; }
+    void onWindowResize(int width, int height);
+    bool shouldQuit() const { return m_shouldQuit; }
 
 private:
     Interface  m_interface;
     ChessBoard m_board;
     PieceColor m_currentPlayer;
     PieceColor m_winner = PieceColor::None;
+    Renderer3D m_renderer;
+    bool       m_shouldQuit{false};
 
     void switchPlayer();
     void drawVictoryPopup();
