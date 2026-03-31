@@ -32,10 +32,12 @@ void ChessBoard::movePiece(int fromRow, int fromCol, int toRow, int toCol)
     delete m_grid[toRow][toCol];
     m_grid[toRow][toCol]     = m_grid[fromRow][fromCol];
     m_grid[fromRow][fromCol] = nullptr;
+    m_lastMove               = LastMove{fromRow, fromCol, toRow, toCol};
 }
 
 void ChessBoard::resetBoard()
 {
+    m_lastMove = std::nullopt;
     for (int row = 0; row < 8; ++row)
         for (int col = 0; col < 8; ++col)
             m_grid[row][col] = nullptr;
@@ -59,6 +61,46 @@ void ChessBoard::resetBoard()
         m_grid[6][col] = new Pawn(PieceColor::White);
     }
 }
+BoardSnapshot ChessBoard::takeSnapshot() const
+{
+    BoardSnapshot snap;
+    for (int r = 0; r < 8; ++r)
+        for (int c = 0; c < 8; ++c)
+        {
+            if (m_grid[r][c])
+                snap[r][c] = {m_grid[r][c]->getType(), m_grid[r][c]->getColor()};
+            else
+                snap[r][c] = {PieceType::None, PieceColor::None};
+        }
+    return snap;
+}
+
+Piece* ChessBoard::createPiece(PieceType type, PieceColor color)
+{
+    switch (type)
+    {
+    case PieceType::Pawn:   return new Pawn(color);
+    case PieceType::Rook:   return new Rook(color);
+    case PieceType::Knight: return new Knight(color);
+    case PieceType::Bishop: return new Bishop(color);
+    case PieceType::Queen:  return new Queen(color);
+    case PieceType::King:   return new King(color);
+    default:                return nullptr;
+    }
+}
+
+void ChessBoard::restoreSnapshot(const BoardSnapshot& snapshot)
+{
+    for (int r = 0; r < 8; ++r)
+        for (int c = 0; c < 8; ++c)
+        {
+            delete m_grid[r][c];
+            m_grid[r][c] = createPiece(snapshot[r][c].first, snapshot[r][c].second);
+        }
+    selectedRow = selectedCol = -1;
+    m_lastMove  = std::nullopt;
+}
+
 std::vector<std::pair<int, int>> ChessBoard::getValidMoves(int row, int col) const
 {
     std::vector<std::pair<int, int>> moves;
