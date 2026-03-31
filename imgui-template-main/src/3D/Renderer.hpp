@@ -16,15 +16,15 @@ public:
     void onWindowResize(int width, int height);
 
 private:
-    glimac::Sphere                 m_sphere{1, 32, 16};
+    void                           buildBoardMesh();
     GLuint                         m_vao{};
     GLuint                         m_vbo{};
     std::optional<glimac::Program> m_program;
     GLint                          m_uniMVP{};
-    GLint                          m_uniMV{};
-    GLint                          m_uniNormal{};
-    glm::mat4                      m_projMatrix{};
-    glm::mat4                      m_mvMatrix{};
-    int                            m_width{800};
-    int                            m_height{800};
+    GLint                          m_uniColor{};
+
+    glm::mat4 m_projMatrix{};
+    glm::mat4 m_viewMatrix{};
+    int       m_width{800};
+    int       m_height{800};
 };
