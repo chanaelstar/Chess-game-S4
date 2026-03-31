@@ -21,5 +21,6 @@ public:
     void                             movePiece(int fromRow, int fromCol, int toRow, int toCol);
     std::vector<std::pair<int, int>> getValidMoves(int row, int col) const;
     PieceColor                       getWinner() const;
+    const Piece*                     getPiece(int row, int col) const { return m_grid[row][col]; }
 };
 inline ImFont* chessFont = nullptr;

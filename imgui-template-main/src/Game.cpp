@@ -63,15 +63,27 @@ void Game::update()
         m_winner = m_board.getWinner();
         if (m_winner == PieceColor::None)
             switchPlayer();
+        if (m_interface.getGameMode() == GameMode::OnePlayer
+            && m_currentPlayer == PieceColor::Black)
+        {
+            auto aiMove = AIPlayer::getMove(m_board, PieceColor::Black);
+            if (aiMove)
+            {
+                m_board.movePiece(aiMove->fromRow, aiMove->fromCol, aiMove->toRow, aiMove->toCol);
+                m_winner = m_board.getWinner();
+                if (m_winner == PieceColor::None)
+                    switchPlayer(); // rend la main au joueur
+            }
+        }
     }
 
     ImGui::SetNextWindowSize(ImVec2(Renderer3D::FBO_WIDTH, Renderer3D::FBO_HEIGHT + 20), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Vue 3D"))
     {
-        ImVec2    avail       = ImGui::GetContentRegionAvail();
-        float     aspect      = (float)Renderer3D::FBO_WIDTH / Renderer3D::FBO_HEIGHT;
-        float     drawW       = avail.x;
-        float     drawH       = drawW / aspect;
+        ImVec2 avail  = ImGui::GetContentRegionAvail();
+        float  aspect = (float)Renderer3D::FBO_WIDTH / Renderer3D::FBO_HEIGHT;
+        float  drawW  = avail.x;
+        float  drawH  = drawW / aspect;
         if (drawH > avail.y)
         {
             drawH = avail.y;

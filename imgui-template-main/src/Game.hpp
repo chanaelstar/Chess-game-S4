@@ -1,5 +1,6 @@
 #pragma once
 #include "3D/Renderer.hpp"
+#include "AI/AIPlayer.hpp"
 #include "ChessBoard.hpp"
 #include "Piece.hpp"
 #include "UI/Interface.hpp"
@@ -19,6 +20,7 @@ private:
     PieceColor m_winner = PieceColor::None;
     Renderer3D m_renderer;
     bool       m_shouldQuit{false};
+    AIPlayer   m_aiPlayer;
 
     void switchPlayer();
     void drawVictoryPopup();
