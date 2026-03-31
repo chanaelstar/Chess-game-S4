@@ -55,16 +55,40 @@ void Renderer3D::init()
     glEnable(GL_DEPTH_TEST);
 
     // Caméra en perspective 3/4 : on regarde l'échiquier depuis le dessus légèrement incliné
-    m_projMatrix = glm::perspective(glm::radians(45.f), (float)m_width / m_height, 0.1f, 100.f);
+    m_projMatrix = glm::perspective(glm::radians(45.f), (float)FBO_WIDTH / FBO_HEIGHT, 0.1f, 100.f);
     m_viewMatrix = glm::lookAt(
         glm::vec3(0, 8, 6), // position caméra : au-dessus et légèrement derrière
         glm::vec3(0, 0, 0), // regarde vers le centre
         glm::vec3(0, 1, 0)  // "haut" = axe Y
     );
+
+    // Création du FBO
+    // Texture couleur
+    glGenTextures(1, &m_fboTexture);
+    glBindTexture(GL_TEXTURE_2D, m_fboTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, FBO_WIDTH, FBO_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Renderbuffer depth
+    glGenRenderbuffers(1, &m_fboDepth);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_fboDepth);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, FBO_WIDTH, FBO_HEIGHT);
+
+    // FBO
+    glGenFramebuffers(1, &m_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_fboTexture, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_fboDepth);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Renderer3D::draw(const ChessBoard& board)
 {
+    // Rendu dans le FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    glViewport(0, 0, FBO_WIDTH, FBO_HEIGHT);
+
     glClearColor(0.1f, 0.1f, 0.1f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -93,12 +117,6 @@ void Renderer3D::draw(const ChessBoard& board)
     }
 
     glBindVertexArray(0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); // revenir au framebuffer par défaut
 }
 
-void Renderer3D::onWindowResize(int width, int height)
-{
-    m_width  = width;
-    m_height = height;
-    glViewport(0, 0, width, height);
-    m_projMatrix = glm::perspective(glm::radians(45.f), (float)width / height, 0.1f, 100.f);
-}
