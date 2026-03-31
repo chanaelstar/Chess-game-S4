@@ -8,6 +8,7 @@ Game::Game()
 void Game::init()
 {
     m_renderer.init();
+    ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 }
 void Game::onWindowResize(int /*w*/, int /*h*/) {}
 
@@ -133,6 +134,17 @@ void Game::update()
             ImVec2(drawW, drawH),
             ImVec2(0, 1), ImVec2(1, 0) // flip vertical (OpenGL vs ImGui convention)
         );
+
+        if (ImGui::IsItemHovered())
+        {
+            const ImGuiIO& io = ImGui::GetIO();
+            if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+                m_renderer.orbit(-io.MouseDelta.x * 0.005f, io.MouseDelta.y * 0.005f);
+            if (io.MouseWheel != 0.0f)
+                m_renderer.zoom(io.MouseWheel * 1.5f);
+            if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+                m_renderer.pan(io.MouseDelta.x, io.MouseDelta.y);
+        }
     }
     ImGui::End();
 

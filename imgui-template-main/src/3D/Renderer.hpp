@@ -18,8 +18,13 @@ public:
     static constexpr int FBO_WIDTH  = 800;
     static constexpr int FBO_HEIGHT = 800;
 
+    void orbit(float dTheta, float dPhi);
+    void zoom(float delta);
+    void pan(float dx, float dy);
+
 private:
     void                           buildBoardMesh();
+    void                           recomputeViewMatrix();
     GLuint                         m_vao{};
     GLuint                         m_vbo{};
     std::optional<glimac::Program> m_program;
@@ -31,6 +36,9 @@ private:
 
     glm::mat4 m_projMatrix{};
     glm::mat4 m_viewMatrix{};
-    // int       m_width{800};
-    // int       m_height{800};
+    // Coordonnées sphériques de la caméra
+    float     m_theta{0.0f};               // angle horizontal (rad)
+    float     m_phi{glm::radians(53.13f)}; // angle vertical (rad) ≈ atan2(8,6)
+    float     m_distance{10.0f};           // distance au centre
+    glm::vec3 m_target{0.f, 0.f, 0.f};     // point visé
 };
