@@ -1,10 +1,11 @@
 #include "3D/Renderer.hpp"
-#include "ChessBoard.hpp"
 #include <cmath>
 #include <glimac/FilePath.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "ChessBoard.hpp"
+
 
 static void addBox(std::vector<float>& verts, float x, float z, float w, float d, float h)
 {
@@ -27,8 +28,6 @@ static void addBox(std::vector<float>& verts, float x, float z, float w, float d
     addFace(x1, y1, z1, x1, y1, z2, x2, y1, z2, x2, y1, z1); // dessous
 }
 
-// Cylindre unité : rayon=1, hauteur=1, de y=0 à y=1, centré en (0,0,0).
-// Utilisé comme template pour toutes les pièces (mis à l'échelle dans draw()).
 void Renderer3D::buildPieceMesh()
 {
     std::vector<float> verts;
@@ -43,12 +42,11 @@ void Renderer3D::buildPieceMesh()
         float x2 = std::cos(a2), z2 = std::sin(a2);
 
         // Fond
-        verts.insert(verts.end(), {0,0,0, x1,0,z1, x2,0,z2});
+        verts.insert(verts.end(), {0, 0, 0, x1, 0, z1, x2, 0, z2});
         // Dessus
-        verts.insert(verts.end(), {0,1,0, x2,1,z2, x1,1,z1});
+        verts.insert(verts.end(), {0, 1, 0, x2, 1, z2, x1, 1, z1});
         // Côté (quad)
-        verts.insert(verts.end(), {x1,0,z1, x2,0,z2, x2,1,z2,
-                                   x1,0,z1, x2,1,z2, x1,1,z1});
+        verts.insert(verts.end(), {x1, 0, z1, x2, 0, z2, x2, 1, z2, x1, 0, z1, x2, 1, z2, x1, 1, z1});
     }
 
     m_pieceVertexCount = (int)(verts.size() / 3);
@@ -58,6 +56,137 @@ void Renderer3D::buildPieceMesh()
     glBindVertexArray(m_pieceVao);
     glBindBuffer(GL_ARRAY_BUFFER, m_pieceVbo);
     glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(float), verts.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+
+void Renderer3D::buildSkyboxMesh()
+{
+    // Cube unité [-1, 1] — les positions servent directement de directions
+    static constexpr float verts[] = {
+        // Arrière
+        -1.f,
+        1.f,
+        -1.f,
+        -1.f,
+        -1.f,
+        -1.f,
+        1.f,
+        -1.f,
+        -1.f,
+        1.f,
+        -1.f,
+        -1.f,
+        1.f,
+        1.f,
+        -1.f,
+        -1.f,
+        1.f,
+        -1.f,
+        // Avant
+        -1.f,
+        -1.f,
+        1.f,
+        -1.f,
+        1.f,
+        1.f,
+        1.f,
+        1.f,
+        1.f,
+        1.f,
+        1.f,
+        1.f,
+        1.f,
+        -1.f,
+        1.f,
+        -1.f,
+        -1.f,
+        1.f,
+        // Gauche
+        -1.f,
+        1.f,
+        1.f,
+        -1.f,
+        1.f,
+        -1.f,
+        -1.f,
+        -1.f,
+        -1.f,
+        -1.f,
+        -1.f,
+        -1.f,
+        -1.f,
+        -1.f,
+        1.f,
+        -1.f,
+        1.f,
+        1.f,
+        // Droite
+        1.f,
+        1.f,
+        -1.f,
+        1.f,
+        1.f,
+        1.f,
+        1.f,
+        -1.f,
+        1.f,
+        1.f,
+        -1.f,
+        1.f,
+        1.f,
+        -1.f,
+        -1.f,
+        1.f,
+        1.f,
+        -1.f,
+        // Bas
+        -1.f,
+        -1.f,
+        -1.f,
+        1.f,
+        -1.f,
+        -1.f,
+        1.f,
+        -1.f,
+        1.f,
+        1.f,
+        -1.f,
+        1.f,
+        -1.f,
+        -1.f,
+        1.f,
+        -1.f,
+        -1.f,
+        -1.f,
+        // Haut
+        -1.f,
+        1.f,
+        -1.f,
+        -1.f,
+        1.f,
+        1.f,
+        1.f,
+        1.f,
+        1.f,
+        1.f,
+        1.f,
+        1.f,
+        1.f,
+        1.f,
+        -1.f,
+        -1.f,
+        1.f,
+        -1.f,
+    };
+
+    glGenVertexArrays(1, &m_skyboxVao);
+    glGenBuffers(1, &m_skyboxVbo);
+    glBindVertexArray(m_skyboxVao);
+    glBindBuffer(GL_ARRAY_BUFFER, m_skyboxVbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -153,6 +282,7 @@ void Renderer3D::pan(float dx, float dy)
 
 void Renderer3D::init()
 {
+    buildSkyboxMesh();
     buildBoardMesh();
     buildBorderMesh();
     buildPieceMesh();
@@ -166,6 +296,12 @@ void Renderer3D::init()
     m_uniColor      = glGetUniformLocation(m_program->getGLId(), "uColor");
     m_uniTexture    = glGetUniformLocation(m_program->getGLId(), "uTexture");
     m_uniUseTexture = glGetUniformLocation(m_program->getGLId(), "uUseTexture");
+
+    m_skyboxProgram = glimac::loadProgram(
+        std::string(CMAKE_SOURCE_DIR) + "/assets/shaders/skybox.vs.glsl",
+        std::string(CMAKE_SOURCE_DIR) + "/assets/shaders/skybox.fs.glsl"
+    );
+    m_skyboxUniVP = glGetUniformLocation(m_skyboxProgram->getGLId(), "uViewProj");
 
     glEnable(GL_DEPTH_TEST);
 
@@ -195,9 +331,24 @@ void Renderer3D::draw(const ChessBoard& board)
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     glViewport(0, 0, FBO_WIDTH, FBO_HEIGHT);
 
-    glClearColor(0.1f, 0.1f, 0.1f, 1.f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // --- Skybox ---
+    // GL_LEQUAL obligatoire : la skybox force depth=1.0 via .xyww,
+    // et le depth buffer est aussi à 1.0 après glClear → GL_LESS rejetterait tout.
+    glDepthMask(GL_FALSE);
+    glDepthFunc(GL_LEQUAL);
+    m_skyboxProgram->use();
+    glm::mat4 skyboxVP = m_projMatrix * glm::mat4(glm::mat3(m_viewMatrix));
+    glUniformMatrix4fv(m_skyboxUniVP, 1, GL_FALSE, glm::value_ptr(skyboxVP));
+    glBindVertexArray(m_skyboxVao);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS); // restaure le comportement normal
+
+    // --- Plateau, bords et pièces ---
     m_program->use();
 
     glm::mat4 mvp = m_projMatrix * m_viewMatrix;
@@ -230,17 +381,19 @@ void Renderer3D::draw(const ChessBoard& board)
     }
 
     // Draw pieces
-    struct PieceShape { float radius, height; };
+    struct PieceShape {
+        float radius, height;
+    };
     auto getShape = [](PieceType type) -> PieceShape {
         switch (type)
         {
-        case PieceType::Pawn:   return {0.22f, 0.40f};
-        case PieceType::Rook:   return {0.26f, 0.50f};
+        case PieceType::Pawn: return {0.22f, 0.40f};
+        case PieceType::Rook: return {0.26f, 0.50f};
         case PieceType::Knight: return {0.24f, 0.55f};
         case PieceType::Bishop: return {0.20f, 0.65f};
-        case PieceType::Queen:  return {0.25f, 0.80f};
-        case PieceType::King:   return {0.27f, 0.90f};
-        default:                return {0.22f, 0.40f};
+        case PieceType::Queen: return {0.25f, 0.80f};
+        case PieceType::King: return {0.27f, 0.90f};
+        default: return {0.22f, 0.40f};
         }
     };
 
