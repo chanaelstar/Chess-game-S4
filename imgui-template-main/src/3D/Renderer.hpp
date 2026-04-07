@@ -27,9 +27,12 @@ private:
     void                           recomputeViewMatrix();
     GLuint                         m_vao{};
     GLuint                         m_vbo{};
+    GLuint                         m_uvVbo{};
     std::optional<glimac::Program> m_program;
     GLint                          m_uniMVP{};
     GLint                          m_uniColor{};
+    GLint                          m_uniTexture{};
+    GLint                          m_uniUseTexture{};
     GLuint                         m_fbo{};
     GLuint                         m_fboTexture{};
     GLuint                         m_fboDepth{};
