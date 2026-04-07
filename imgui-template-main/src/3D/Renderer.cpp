@@ -5,121 +5,68 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-// Ajoute un cube volumique pour une case
-static void addSquareCube(std::vector<float>& vertices, std::vector<float>& uvs, float x, float z, float height = 0.1f)
+static void addBox(std::vector<float>& verts, float x, float z, float w, float d, float h)
 {
-    // Face supérieure (top face - visible)
-    vertices.insert(vertices.end(), {x, height, z});
-    vertices.insert(vertices.end(), {x + 1.f, height, z});
-    vertices.insert(vertices.end(), {x + 1.f, height, z + 1.f});
+    const float x1 = x, x2 = x + w;
+    const float y1 = 0.f, y2 = h;
+    const float z1 = z, z2 = z + d;
 
-    vertices.insert(vertices.end(), {x, height, z});
-    vertices.insert(vertices.end(), {x + 1.f, height, z + 1.f});
-    vertices.insert(vertices.end(), {x, height, z + 1.f});
+    auto addFace = [&](float ax, float ay, float az,
+                       float bx, float by, float bz,
+                       float cx, float cy, float cz,
+                       float dx, float dy, float dz) {
+        verts.insert(verts.end(), {ax, ay, az, bx, by, bz, cx, cy, cz, ax, ay, az, cx, cy, cz, dx, dy, dz});
+    };
 
-    // UVs pour la face supérieure
-    for (int i = 0; i < 6; ++i)
-        uvs.insert(uvs.end(), {0.f, 0.f});
-
-    // Face inférieure (bottom)
-    vertices.insert(vertices.end(), {x, 0, z});
-    vertices.insert(vertices.end(), {x + 1.f, height, z});
-    vertices.insert(vertices.end(), {x + 1.f, 0, z});
-
-    vertices.insert(vertices.end(), {x, 0, z});
-    vertices.insert(vertices.end(), {x, height, z});
-    vertices.insert(vertices.end(), {x + 1.f, height, z});
-
-    for (int i = 0; i < 6; ++i)
-        uvs.insert(uvs.end(), {0.f, 0.f});
-
-    // Sides (avant)
-    vertices.insert(vertices.end(), {x, 0, z});
-    vertices.insert(vertices.end(), {x + 1.f, 0, z});
-    vertices.insert(vertices.end(), {x + 1.f, height, z});
-
-    vertices.insert(vertices.end(), {x, 0, z});
-    vertices.insert(vertices.end(), {x + 1.f, height, z});
-    vertices.insert(vertices.end(), {x, height, z});
-
-    for (int i = 0; i < 6; ++i)
-        uvs.insert(uvs.end(), {0.f, 0.f});
-
-    // Sides (arrière)
-    vertices.insert(vertices.end(), {x, 0, z + 1.f});
-    vertices.insert(vertices.end(), {x, height, z + 1.f});
-    vertices.insert(vertices.end(), {x + 1.f, height, z + 1.f});
-
-    vertices.insert(vertices.end(), {x, 0, z + 1.f});
-    vertices.insert(vertices.end(), {x + 1.f, height, z + 1.f});
-    vertices.insert(vertices.end(), {x + 1.f, 0, z + 1.f});
-
-    for (int i = 0; i < 6; ++i)
-        uvs.insert(uvs.end(), {0.f, 0.f});
-
-    // Sides (gauche)
-    vertices.insert(vertices.end(), {x, 0, z});
-    vertices.insert(vertices.end(), {x, height, z});
-    vertices.insert(vertices.end(), {x, height, z + 1.f});
-
-    vertices.insert(vertices.end(), {x, 0, z});
-    vertices.insert(vertices.end(), {x, height, z + 1.f});
-    vertices.insert(vertices.end(), {x, 0, z + 1.f});
-
-    for (int i = 0; i < 6; ++i)
-        uvs.insert(uvs.end(), {0.f, 0.f});
-
-    // Sides (droite)
-    vertices.insert(vertices.end(), {x + 1.f, 0, z});
-    vertices.insert(vertices.end(), {x + 1.f, height, z + 1.f});
-    vertices.insert(vertices.end(), {x + 1.f, height, z});
-
-    vertices.insert(vertices.end(), {x + 1.f, 0, z});
-    vertices.insert(vertices.end(), {x + 1.f, 0, z + 1.f});
-    vertices.insert(vertices.end(), {x + 1.f, height, z + 1.f});
-
-    for (int i = 0; i < 6; ++i)
-        uvs.insert(uvs.end(), {0.f, 0.f});
+    addFace(x1, y2, z1, x2, y2, z1, x2, y2, z2, x1, y2, z2); // dessus
+    addFace(x1, y1, z1, x2, y1, z1, x2, y2, z1, x1, y2, z1); // avant
+    addFace(x1, y1, z2, x1, y2, z2, x2, y2, z2, x2, y1, z2); // arrière
+    addFace(x1, y1, z1, x1, y2, z1, x1, y2, z2, x1, y1, z2); // gauche
+    addFace(x2, y1, z1, x2, y1, z2, x2, y2, z2, x2, y2, z1); // droite
+    addFace(x1, y1, z1, x1, y1, z2, x2, y1, z2, x2, y1, z1); // dessous
 }
 
-// Ajoute le bord autour de l'échiquier (4 barres encadrant les 4 côtés)
+void Renderer3D::buildBorderMesh()
+{
+    std::vector<float> verts;
+
+    const float h = 0.45f;
+    const float t = 0.3f; // épaisseur du bord
+
+    addBox(verts, -4.f - t, -4.f - t, 8.f + 2.f * t, t, h); // avant
+    addBox(verts, -4.f - t, 4.f, 8.f + 2.f * t, t, h);      // arrière
+    addBox(verts, -4.f - t, -4.f, t, 8.f, h);               // gauche
+    addBox(verts, 4.f, -4.f, t, 8.f, h);                    // droite
+
+    m_borderVertexCount = (int)(verts.size() / 3);
+
+    glGenVertexArrays(1, &m_borderVao);
+    glGenBuffers(1, &m_borderVbo);
+
+    glBindVertexArray(m_borderVao);
+    glBindBuffer(GL_ARRAY_BUFFER, m_borderVbo);
+    glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(float), verts.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+
 void Renderer3D::buildBoardMesh()
 {
     std::vector<float> vertices;
-    std::vector<float> uvs;
-    int                vertexCount = 0;
 
-    // Créer les cubes pour chaque case
     for (int row = 0; row < 8; ++row)
-    {
         for (int col = 0; col < 8; ++col)
-        {
-            float x = col - 4.0f;
-            float z = row - 4.0f;
-            addSquareCube(vertices, uvs, x, z, 0.45f);
-        }
-    }
-
-    vertexCount = 64 * 36; // 64 cases, 36 vertices chacune
+            addBox(vertices, col - 4.f, row - 4.f, 1.f, 1.f, 0.45f);
 
     glGenVertexArrays(1, &m_vao);
     glGenBuffers(1, &m_vbo);
-    glGenBuffers(1, &m_uvVbo);
-
     glBindVertexArray(m_vao);
-
-    // Positions
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
-    // UV Coordinates
-    glBindBuffer(GL_ARRAY_BUFFER, m_uvVbo);
-    glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(float), uvs.data(), GL_STATIC_DRAW);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
@@ -169,6 +116,7 @@ void Renderer3D::pan(float dx, float dy)
 void Renderer3D::init()
 {
     buildBoardMesh();
+    buildBorderMesh();
 
     m_program = glimac::loadProgram(
         std::string(CMAKE_SOURCE_DIR) + "/assets/shaders/board.vs.glsl",
@@ -212,13 +160,19 @@ void Renderer3D::draw(const ChessBoard& board)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     m_program->use();
-    glBindVertexArray(m_vao);
 
     glm::mat4 mvp = m_projMatrix * m_viewMatrix;
     glUniformMatrix4fv(m_uniMVP, 1, GL_FALSE, glm::value_ptr(mvp));
     glUniform1i(m_uniUseTexture, 0); // Utiliser les couleurs, pas les textures
 
+    // Draw border
+    glm::vec3 borderColor = glm::vec3(0.35f, 0.20f, 0.08f);
+    glUniform3fv(m_uniColor, 1, glm::value_ptr(borderColor));
+    glBindVertexArray(m_borderVao);
+    glDrawArrays(GL_TRIANGLES, 0, m_borderVertexCount);
+
     // Draw chess squares
+    glBindVertexArray(m_vao);
     int vertexIndex = 0;
     for (int row = 0; row < 8; ++row)
     {
@@ -231,7 +185,6 @@ void Renderer3D::draw(const ChessBoard& board)
 
             glUniform3fv(m_uniColor, 1, glm::value_ptr(color));
 
-            // 36 sommets par cube (6 faces × 6 sommets/face)
             glDrawArrays(GL_TRIANGLES, vertexIndex, 36);
             vertexIndex += 36;
         }

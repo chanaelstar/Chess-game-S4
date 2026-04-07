@@ -24,10 +24,13 @@ public:
 
 private:
     void                           buildBoardMesh();
+    void                           buildBorderMesh();
     void                           recomputeViewMatrix();
     GLuint                         m_vao{};
     GLuint                         m_vbo{};
-    GLuint                         m_uvVbo{};
+    GLuint                         m_borderVao{};
+    GLuint                         m_borderVbo{};
+    int                            m_borderVertexCount{};
     std::optional<glimac::Program> m_program;
     GLint                          m_uniMVP{};
     GLint                          m_uniColor{};
