@@ -1,4 +1,5 @@
 #include "3D/Renderer.hpp"
+#include "ChessBoard.hpp"
 #include <cmath>
 #include <glimac/FilePath.hpp>
 #include <glm/gtc/constants.hpp>
@@ -24,6 +25,43 @@ static void addBox(std::vector<float>& verts, float x, float z, float w, float d
     addFace(x1, y1, z1, x1, y2, z1, x1, y2, z2, x1, y1, z2); // gauche
     addFace(x2, y1, z1, x2, y1, z2, x2, y2, z2, x2, y2, z1); // droite
     addFace(x1, y1, z1, x1, y1, z2, x2, y1, z2, x2, y1, z1); // dessous
+}
+
+// Cylindre unité : rayon=1, hauteur=1, de y=0 à y=1, centré en (0,0,0).
+// Utilisé comme template pour toutes les pièces (mis à l'échelle dans draw()).
+void Renderer3D::buildPieceMesh()
+{
+    std::vector<float> verts;
+    const int          segments = 12;
+    const float        twoPi    = glm::two_pi<float>();
+
+    for (int i = 0; i < segments; ++i)
+    {
+        float a1 = twoPi * i / segments;
+        float a2 = twoPi * (i + 1) / segments;
+        float x1 = std::cos(a1), z1 = std::sin(a1);
+        float x2 = std::cos(a2), z2 = std::sin(a2);
+
+        // Fond
+        verts.insert(verts.end(), {0,0,0, x1,0,z1, x2,0,z2});
+        // Dessus
+        verts.insert(verts.end(), {0,1,0, x2,1,z2, x1,1,z1});
+        // Côté (quad)
+        verts.insert(verts.end(), {x1,0,z1, x2,0,z2, x2,1,z2,
+                                   x1,0,z1, x2,1,z2, x1,1,z1});
+    }
+
+    m_pieceVertexCount = (int)(verts.size() / 3);
+
+    glGenVertexArrays(1, &m_pieceVao);
+    glGenBuffers(1, &m_pieceVbo);
+    glBindVertexArray(m_pieceVao);
+    glBindBuffer(GL_ARRAY_BUFFER, m_pieceVbo);
+    glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(float), verts.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 }
 
 void Renderer3D::buildBorderMesh()
@@ -117,6 +155,7 @@ void Renderer3D::init()
 {
     buildBoardMesh();
     buildBorderMesh();
+    buildPieceMesh();
 
     m_program = glimac::loadProgram(
         std::string(CMAKE_SOURCE_DIR) + "/assets/shaders/board.vs.glsl",
@@ -187,6 +226,48 @@ void Renderer3D::draw(const ChessBoard& board)
 
             glDrawArrays(GL_TRIANGLES, vertexIndex, 36);
             vertexIndex += 36;
+        }
+    }
+
+    // Draw pieces
+    struct PieceShape { float radius, height; };
+    auto getShape = [](PieceType type) -> PieceShape {
+        switch (type)
+        {
+        case PieceType::Pawn:   return {0.22f, 0.40f};
+        case PieceType::Rook:   return {0.26f, 0.50f};
+        case PieceType::Knight: return {0.24f, 0.55f};
+        case PieceType::Bishop: return {0.20f, 0.65f};
+        case PieceType::Queen:  return {0.25f, 0.80f};
+        case PieceType::King:   return {0.27f, 0.90f};
+        default:                return {0.22f, 0.40f};
+        }
+    };
+
+    glBindVertexArray(m_pieceVao);
+    for (int row = 0; row < 8; ++row)
+    {
+        for (int col = 0; col < 8; ++col)
+        {
+            const Piece* piece = board.getPiece(row, col);
+            if (!piece)
+                continue;
+
+            auto [radius, height] = getShape(piece->getType());
+
+            // Centre de la case en coordonnées monde, posé sur le dessus du plateau
+            float     cx    = col - 4.f + 0.5f;
+            float     cz    = row - 4.f + 0.5f;
+            glm::mat4 model = glm::translate(glm::mat4(1.f), glm::vec3(cx, 0.45f, cz))
+                              * glm::scale(glm::mat4(1.f), glm::vec3(radius, height, radius));
+            glUniformMatrix4fv(m_uniMVP, 1, GL_FALSE, glm::value_ptr(mvp * model));
+
+            glm::vec3 color = (piece->getColor() == PieceColor::White)
+                                  ? glm::vec3(0.95f, 0.93f, 0.85f)
+                                  : glm::vec3(0.12f, 0.08f, 0.05f);
+            glUniform3fv(m_uniColor, 1, glm::value_ptr(color));
+
+            glDrawArrays(GL_TRIANGLES, 0, m_pieceVertexCount);
         }
     }
 
