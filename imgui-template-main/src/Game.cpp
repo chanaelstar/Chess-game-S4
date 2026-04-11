@@ -1,5 +1,7 @@
 #include "Game.hpp"
 #include <imgui.h>
+#include <vector>
+#include <utility>
 #include "3D/Renderer.hpp"
 
 Game::Game()
@@ -64,6 +66,36 @@ static std::string formatMove(PieceColor color, const ChessBoard::LastMove& m)
     return who + ": " + fc + std::to_string(fr) + " -> " + tc + std::to_string(tr);
 }
 
+void Game::applyChaosEvent()
+{
+    // Collecte toutes les pièces non-Roi (pour ne pas téléporter les rois)
+    std::vector<std::pair<int,int>> pieces;
+    std::vector<std::pair<int,int>> emptySquares;
+
+    for (int r = 0; r < 8; ++r)
+        for (int c = 0; c < 8; ++c)
+        {
+            const Piece* p = m_board.getPiece(r, c);
+            if (p && p->getType() != PieceType::King)
+                pieces.push_back({r, c});
+            else if (!p)
+                emptySquares.push_back({r, c});
+        }
+
+    if (pieces.empty() || emptySquares.empty())
+        return;
+
+    // X ~ U({0, ..., |pieces|-1}) : choisit la pièce à téléporter
+    int pieceIdx = m_uniform.sample(0, static_cast<int>(pieces.size()) - 1);
+    auto [fromRow, fromCol] = pieces[pieceIdx];
+
+    // Y ~ U({0, ..., |emptySquares|-1}) : choisit la case de destination
+    int squareIdx = m_uniform.sample(0, static_cast<int>(emptySquares.size()) - 1);
+    auto [toRow, toCol] = emptySquares[squareIdx];
+
+    m_board.movePiece(fromRow, fromCol, toRow, toCol);
+}
+
 // Quand fin de partie
 void Game::update()
 {
@@ -83,6 +115,14 @@ void Game::update()
             m_moveHistory.push_back(formatMove(m_currentPlayer, *lm));
 
         m_winner = m_board.getWinner();
+        if (m_winner == PieceColor::None)
+        {
+            // Mode Infernal : événement chaos après chaque coup (loi uniforme discrète)
+            if (m_interface.getGameMode() == GameMode::RandomMode)
+                applyChaosEvent();
+
+            m_winner = m_board.getWinner();
+        }
         if (m_winner == PieceColor::None)
         {
             switchPlayer();
