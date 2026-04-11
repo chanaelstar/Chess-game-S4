@@ -4,6 +4,7 @@
 #include "3D/Renderer.hpp"
 #include "AI/AIPlayer.hpp"
 #include "ChessBoard.hpp"
+#include "Maths/GeometricDistribution.hpp"
 #include "Maths/UniformDiscrete.hpp"
 #include "Piece.hpp"
 #include "UI/GameHUD.hpp"
@@ -37,7 +38,9 @@ private:
 
     void switchPlayer();
     void drawVictoryPopup();
-    void applyChaosEvent(); // Mode Infernal : téléporte une pièce aléatoire
+    void applyChaosEvent(std::string& logEntry); // Mode Infernal : téléporte une pièce aléatoire
 
-    UniformDiscrete m_uniform;
+    UniformDiscrete       m_uniform;
+    GeometricDistribution m_geom;
+    int                   m_chaosCountdown{1}; // tours restants avant le prochain événement chaos
 };

@@ -1,7 +1,7 @@
 #include "UI/GameHUD.hpp"
 #include <imgui.h>
 
-bool GameHUD::draw(PieceColor currentPlayer, const std::vector<std::string>& history, bool canUndo)
+bool GameHUD::draw(PieceColor currentPlayer, const std::vector<std::string>& history, bool canUndo, int chaosCountdown)
 {
     bool undoRequested = false;
 

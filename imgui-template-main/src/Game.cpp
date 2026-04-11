@@ -1,8 +1,9 @@
 #include "Game.hpp"
 #include <imgui.h>
-#include <vector>
 #include <utility>
+#include <vector>
 #include "3D/Renderer.hpp"
+
 
 Game::Game()
     : m_currentPlayer(PieceColor::White) {}
@@ -66,11 +67,11 @@ static std::string formatMove(PieceColor color, const ChessBoard::LastMove& m)
     return who + ": " + fc + std::to_string(fr) + " -> " + tc + std::to_string(tr);
 }
 
-void Game::applyChaosEvent()
+void Game::applyChaosEvent(std::string& logEntry)
 {
     // Collecte toutes les pièces non-Roi (pour ne pas téléporter les rois)
-    std::vector<std::pair<int,int>> pieces;
-    std::vector<std::pair<int,int>> emptySquares;
+    std::vector<std::pair<int, int>> pieces;
+    std::vector<std::pair<int, int>> emptySquares;
 
     for (int r = 0; r < 8; ++r)
         for (int c = 0; c < 8; ++c)
@@ -86,12 +87,16 @@ void Game::applyChaosEvent()
         return;
 
     // X ~ U({0, ..., |pieces|-1}) : choisit la pièce à téléporter
-    int pieceIdx = m_uniform.sample(0, static_cast<int>(pieces.size()) - 1);
+    int pieceIdx            = m_uniform.sample(0, static_cast<int>(pieces.size()) - 1);
     auto [fromRow, fromCol] = pieces[pieceIdx];
 
     // Y ~ U({0, ..., |emptySquares|-1}) : choisit la case de destination
-    int squareIdx = m_uniform.sample(0, static_cast<int>(emptySquares.size()) - 1);
+    int squareIdx       = m_uniform.sample(0, static_cast<int>(emptySquares.size()) - 1);
     auto [toRow, toCol] = emptySquares[squareIdx];
+
+    const Piece* p = m_board.getPiece(fromRow, fromCol);
+    logEntry       = std::string("[Chaos] ") + (char)('a' + fromCol) + std::to_string(8 - fromRow)
+               + " -> " + (char)('a' + toCol) + std::to_string(8 - toRow);
 
     m_board.movePiece(fromRow, fromCol, toRow, toCol);
 }
@@ -117,9 +122,20 @@ void Game::update()
         m_winner = m_board.getWinner();
         if (m_winner == PieceColor::None)
         {
-            // Mode Infernal : événement chaos après chaque coup (loi uniforme discrète)
+            // Mode Infernal : événement chaos cadencé par une loi géométrique
             if (m_interface.getGameMode() == GameMode::RandomMode)
-                applyChaosEvent();
+            {
+                --m_chaosCountdown;
+                if (m_chaosCountdown <= 0)
+                {
+                    std::string chaosLog;
+                    applyChaosEvent(chaosLog);
+                    if (!chaosLog.empty())
+                        m_moveHistory.push_back(chaosLog);
+                    // Prochain événement dans X ~ Geom(0.4) tours (E[X] = 2.5 tours)
+                    m_chaosCountdown = m_geom.sample(0.4);
+                }
+            }
 
             m_winner = m_board.getWinner();
         }
@@ -145,7 +161,7 @@ void Game::update()
 
     if (m_hud.draw(m_currentPlayer, m_moveHistory, !m_undoStack.empty()) && !m_undoStack.empty())
     {
-        auto& snap      = m_undoStack.back();
+        auto& snap = m_undoStack.back();
         m_board.restoreSnapshot(snap.board);
         m_currentPlayer = snap.currentPlayer;
         m_moveHistory   = snap.moveHistory;
