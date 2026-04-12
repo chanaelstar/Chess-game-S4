@@ -188,8 +188,12 @@ void Game::update()
             std::string chaosLog;
             applyChaosEvent(chaosLog);
             if (!chaosLog.empty())
-                m_moveHistory.push_back("[Spontané] " + chaosLog.substr(8)); // retire "[Chaos] " (8 caractères)
-            // Prochain chaos spontané : X ~ Exp(0.2)
+                m_moveHistory.push_back("[Spontané] " + chaosLog.substr(8));
+            // Secousse caméra : (dTheta, dPhi) ~ N(0, 0.15²)
+            float dTheta, dPhi;
+            m_normal.samplePair(0.f, 0.15f, dTheta, dPhi);
+            m_renderer.orbit(dTheta, dPhi);
+            // Prochain chaos spontané : X ~ Exp(1/30)
             m_spontaneousTimer = m_expDist.sample(1.f / 30.f);
         }
     }
@@ -217,6 +221,10 @@ void Game::update()
                     applyChaosEvent(chaosLog);
                     if (!chaosLog.empty())
                         m_moveHistory.push_back(chaosLog);
+                    // Secousse caméra : (dTheta, dPhi) ~ N(0, 0.15²)
+                    float dTheta, dPhi;
+                    m_normal.samplePair(0.f, 0.15f, dTheta, dPhi);
+                    m_renderer.orbit(dTheta, dPhi);
                     // Prochain événement dans X ~ Geom(0.4) tours (E[X] = 2.5 tours)
                     m_chaosCountdown = m_geom.sample(0.4);
                 }

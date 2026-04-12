@@ -9,6 +9,7 @@
 #include "Maths/BinomialDistribution.hpp"
 #include "Maths/ExponentialDistribution.hpp"
 #include "Maths/GeometricDistribution.hpp"
+#include "Maths/NormalDistribution.hpp"
 #include "Maths/PoissonDistribution.hpp"
 #include "Maths/UniformDiscrete.hpp"
 #include "Piece.hpp"
@@ -22,7 +23,7 @@ public:
     void init();
     void update();
     void onWindowResize(int width, int height);
-    bool shouldQuit() const { return m_shouldQuit; }
+    bool shouldQuit() const { return m_shouldQuit || m_interface.getAppState() == AppState::Exit; }
 
     struct TurnSnapshot {
         BoardSnapshot            board;
@@ -51,6 +52,7 @@ private:
     PoissonDistribution   m_poisson;
     BinomialDistribution  m_binomial;
     ExponentialDistribution m_expDist;
+    NormalDistribution      m_normal;
     int                   m_chaosCountdown{1};
     bool                  m_chaosInitialized{false};
     float                 m_spontaneousTimer{0.f};    // secondes avant le prochain chaos spontané
