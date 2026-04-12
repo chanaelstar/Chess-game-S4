@@ -4,6 +4,8 @@
 #include "3D/Renderer.hpp"
 #include "AI/AIPlayer.hpp"
 #include "ChessBoard.hpp"
+#include <vector>
+#include "Maths/BinomialDistribution.hpp"
 #include "Maths/GeometricDistribution.hpp"
 #include "Maths/PoissonDistribution.hpp"
 #include "Maths/UniformDiscrete.hpp"
@@ -39,10 +41,13 @@ private:
 
     void switchPlayer();
     void drawVictoryPopup();
-    void applyChaosEvent(std::string& logEntry); // Mode Infernal : téléporte une pièce aléatoire
+    void applyChaosEvent(std::string& logEntry);
+    void applyBinomialPawnSetup();             // Mode Infernal : retrait de pions au démarrage
 
     UniformDiscrete       m_uniform;
     GeometricDistribution m_geom;
     PoissonDistribution   m_poisson;
-    int                   m_chaosCountdown{1}; // tours restants avant le prochain événement chaos
+    BinomialDistribution  m_binomial;
+    int                   m_chaosCountdown{1};
+    bool                  m_chaosInitialized{false}; // tours restants avant le prochain événement chaos
 };

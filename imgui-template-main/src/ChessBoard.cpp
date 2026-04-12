@@ -27,6 +27,12 @@ void ChessBoard::setSelectedSquare(int row, int col)
     }
 }
 
+void ChessBoard::removePiece(int row, int col)
+{
+    delete m_grid[row][col];
+    m_grid[row][col] = nullptr;
+}
+
 void ChessBoard::movePiece(int fromRow, int fromCol, int toRow, int toCol)
 {
     delete m_grid[toRow][toCol];

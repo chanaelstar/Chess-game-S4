@@ -37,8 +37,10 @@ void Game::drawVictoryPopup()
             m_board.resetBoard();
             m_moveHistory.clear();
             m_undoStack.clear();
-            m_currentPlayer = PieceColor::White;
-            m_winner        = PieceColor::None;
+            m_currentPlayer    = PieceColor::White;
+            m_winner           = PieceColor::None;
+            m_chaosInitialized = false;
+            m_chaosCountdown   = 1;
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
@@ -47,8 +49,10 @@ void Game::drawVictoryPopup()
             m_board.resetBoard();
             m_moveHistory.clear();
             m_undoStack.clear();
-            m_currentPlayer = PieceColor::White;
-            m_winner        = PieceColor::None;
+            m_currentPlayer    = PieceColor::White;
+            m_winner           = PieceColor::None;
+            m_chaosInitialized = false;
+            m_chaosCountdown   = 1;
             m_interface.backToMenu();
             ImGui::CloseCurrentPopup();
         }
@@ -64,6 +68,26 @@ static std::string formatMove(PieceColor color, const ChessBoard::LastMove& m)
     int         fr  = 8 - m.fromRow;
     int         tr  = 8 - m.toRow;
     return who + ": " + fc + std::to_string(fr) + " -> " + tc + std::to_string(tr);
+}
+
+void Game::applyBinomialPawnSetup()
+{
+    std::vector<bool> whiteTrials, blackTrials;
+    int               removedWhite = m_binomial.sample(8, 0.3, whiteTrials);
+    int               removedBlack = m_binomial.sample(8, 0.3, blackTrials);
+
+    for (int col = 0; col < 8; ++col)
+    {
+        if (whiteTrials[col])
+            m_board.removePiece(6, col);
+        if (blackTrials[col])
+            m_board.removePiece(1, col);
+    }
+
+    std::string log = "[Debut] B(8, 0.3) : "
+                      + std::to_string(removedWhite) + " pion(s) blanc(s) et "
+                      + std::to_string(removedBlack) + " pion(s) noir(s) absents";
+    m_moveHistory.push_back(log);
 }
 
 void Game::applyChaosEvent(std::string& logEntry)
@@ -111,19 +135,20 @@ void Game::applyChaosEvent(std::string& logEntry)
         const char* pieceName = "";
         switch (p->getType())
         {
-        case PieceType::Pawn:   pieceName = "Pion";      break;
-        case PieceType::Rook:   pieceName = "Tour";      break;
-        case PieceType::Knight: pieceName = "Cavalier";  break;
-        case PieceType::Bishop: pieceName = "Fou";       break;
-        case PieceType::Queen:  pieceName = "Dame";      break;
-        default:                pieceName = "Piece";     break;
+        case PieceType::Pawn: pieceName = "Pion"; break;
+        case PieceType::Rook: pieceName = "Tour"; break;
+        case PieceType::Knight: pieceName = "Cavalier"; break;
+        case PieceType::Bishop: pieceName = "Fou"; break;
+        case PieceType::Queen: pieceName = "Dame"; break;
+        default: pieceName = "Piece"; break;
         }
         const char* pieceColor = (p->getColor() == PieceColor::White) ? "B" : "N";
 
-        if (t > 0) logEntry += ", ";
+        if (t > 0)
+            logEntry += ", ";
         logEntry += std::string(pieceColor) + "." + pieceName
-                  + " " + (char)('a' + fromCol) + std::to_string(8 - fromRow)
-                  + "->" + (char)('a' + toCol) + std::to_string(8 - toRow);
+                    + " " + (char)('a' + fromCol) + std::to_string(8 - fromRow)
+                    + "->" + (char)('a' + toCol) + std::to_string(8 - toRow);
 
         m_board.movePiece(fromRow, fromCol, toRow, toCol);
     }
@@ -137,6 +162,13 @@ void Game::update()
         m_interface.drawMenu();
         return;
     }
+    // Mode Infernal : setup binomial au premier frame (pions absents)
+    if (m_interface.getGameMode() == GameMode::RandomMode && !m_chaosInitialized)
+    {
+        applyBinomialPawnSetup();
+        m_chaosInitialized = true;
+    }
+
     m_renderer.draw(m_board);
     // Sauvegarder l'état AVANT le coup (drawBoard applique le coup en interne)
     TurnSnapshot preMove{m_board.takeSnapshot(), m_currentPlayer, m_moveHistory};

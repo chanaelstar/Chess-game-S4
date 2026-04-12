@@ -26,6 +26,7 @@ public:
     bool                             drawBoard(PieceColor currentPlayer);
     void                             setSelectedSquare(int row, int col);
     void                             movePiece(int fromRow, int fromCol, int toRow, int toCol);
+    void                             removePiece(int row, int col);
     std::vector<std::pair<int, int>> getValidMoves(int row, int col) const;
     PieceColor                       getWinner() const;
     const Piece*                     getPiece(int row, int col) const { return m_grid[row][col]; }
