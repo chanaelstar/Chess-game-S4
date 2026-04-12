@@ -41,6 +41,7 @@ void Game::drawVictoryPopup()
             m_winner           = PieceColor::None;
             m_chaosInitialized = false;
             m_chaosCountdown   = 1;
+            m_spontaneousTimer = 0.f;
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
@@ -53,6 +54,7 @@ void Game::drawVictoryPopup()
             m_winner           = PieceColor::None;
             m_chaosInitialized = false;
             m_chaosCountdown   = 1;
+            m_spontaneousTimer = 0.f;
             m_interface.backToMenu();
             ImGui::CloseCurrentPopup();
         }
@@ -162,11 +164,34 @@ void Game::update()
         m_interface.drawMenu();
         return;
     }
+    // Calcul du deltaTime (en secondes) entre deux frames
+    auto  now = std::chrono::steady_clock::now();
+    float dt  = std::chrono::duration<float>(now - m_lastFrameTime).count();
+    if (dt > 0.5f) dt = 0.5f; // clamp au démarrage (premier frame)
+    m_lastFrameTime = now;
+
     // Mode Infernal : setup binomial au premier frame (pions absents)
     if (m_interface.getGameMode() == GameMode::RandomMode && !m_chaosInitialized)
     {
         applyBinomialPawnSetup();
+        // Premier délai spontané : X ~ Exp(0.2) → E[X] = 5 secondes
+        m_spontaneousTimer = m_expDist.sample(1.f / 30.f);
         m_chaosInitialized = true;
+    }
+
+    // Mode Infernal : chaos spontané en temps réel cadencé par Exp(0.2)
+    if (m_interface.getGameMode() == GameMode::RandomMode && m_chaosInitialized)
+    {
+        m_spontaneousTimer -= dt;
+        if (m_spontaneousTimer <= 0.f)
+        {
+            std::string chaosLog;
+            applyChaosEvent(chaosLog);
+            if (!chaosLog.empty())
+                m_moveHistory.push_back("[Spontané] " + chaosLog.substr(8)); // retire "[Chaos] " (8 caractères)
+            // Prochain chaos spontané : X ~ Exp(0.2)
+            m_spontaneousTimer = m_expDist.sample(1.f / 30.f);
+        }
     }
 
     m_renderer.draw(m_board);
