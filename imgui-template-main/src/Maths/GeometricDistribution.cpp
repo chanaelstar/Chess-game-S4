@@ -1,5 +1,5 @@
 #include "GeometricDistribution.hpp"
-#include <cmath> // log, ceil
+#include <cmath>
 
 GeometricDistribution::GeometricDistribution(unsigned int seed)
     : m_rng(seed), m_uniform01(0.0, 1.0)

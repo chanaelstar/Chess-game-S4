@@ -5,6 +5,7 @@
 #include "AI/AIPlayer.hpp"
 #include "ChessBoard.hpp"
 #include "Maths/GeometricDistribution.hpp"
+#include "Maths/PoissonDistribution.hpp"
 #include "Maths/UniformDiscrete.hpp"
 #include "Piece.hpp"
 #include "UI/GameHUD.hpp"
@@ -42,5 +43,6 @@ private:
 
     UniformDiscrete       m_uniform;
     GeometricDistribution m_geom;
+    PoissonDistribution   m_poisson;
     int                   m_chaosCountdown{1}; // tours restants avant le prochain événement chaos
 };

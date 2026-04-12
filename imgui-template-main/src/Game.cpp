@@ -4,7 +4,6 @@
 #include <vector>
 #include "3D/Renderer.hpp"
 
-
 Game::Game()
     : m_currentPlayer(PieceColor::White) {}
 
@@ -69,36 +68,65 @@ static std::string formatMove(PieceColor color, const ChessBoard::LastMove& m)
 
 void Game::applyChaosEvent(std::string& logEntry)
 {
-    // Collecte toutes les pièces non-Roi (pour ne pas téléporter les rois)
-    std::vector<std::pair<int, int>> pieces;
-    std::vector<std::pair<int, int>> emptySquares;
+    // X ~ Poisson(1.5) : nombre de pièces téléportées lors de cet événement
+    int nbTeleports = m_poisson.sample(1.5);
 
-    for (int r = 0; r < 8; ++r)
-        for (int c = 0; c < 8; ++c)
-        {
-            const Piece* p = m_board.getPiece(r, c);
-            if (p && p->getType() != PieceType::King)
-                pieces.push_back({r, c});
-            else if (!p)
-                emptySquares.push_back({r, c});
-        }
-
-    if (pieces.empty() || emptySquares.empty())
+    if (nbTeleports == 0)
+    {
+        logEntry = "[Chaos] Rien ne se passe...";
         return;
+    }
 
-    // X ~ U({0, ..., |pieces|-1}) : choisit la pièce à téléporter
-    int pieceIdx            = m_uniform.sample(0, static_cast<int>(pieces.size()) - 1);
-    auto [fromRow, fromCol] = pieces[pieceIdx];
+    logEntry = "[Chaos] ";
 
-    // Y ~ U({0, ..., |emptySquares|-1}) : choisit la case de destination
-    int squareIdx       = m_uniform.sample(0, static_cast<int>(emptySquares.size()) - 1);
-    auto [toRow, toCol] = emptySquares[squareIdx];
+    for (int t = 0; t < nbTeleports; ++t)
+    {
+        // Recalcul à chaque itération car le plateau a changé
+        std::vector<std::pair<int, int>> pieces;
+        std::vector<std::pair<int, int>> emptySquares;
 
-    const Piece* p = m_board.getPiece(fromRow, fromCol);
-    logEntry       = std::string("[Chaos] ") + (char)('a' + fromCol) + std::to_string(8 - fromRow)
-               + " -> " + (char)('a' + toCol) + std::to_string(8 - toRow);
+        for (int r = 0; r < 8; ++r)
+            for (int c = 0; c < 8; ++c)
+            {
+                const Piece* p = m_board.getPiece(r, c);
+                if (p && p->getType() != PieceType::King)
+                    pieces.push_back({r, c});
+                else if (!p)
+                    emptySquares.push_back({r, c});
+            }
 
-    m_board.movePiece(fromRow, fromCol, toRow, toCol);
+        if (pieces.empty() || emptySquares.empty())
+            break;
+
+        // X ~ U({0, ..., |pieces|-1}) : choisit la pièce à téléporter
+        int pieceIdx            = m_uniform.sample(0, static_cast<int>(pieces.size()) - 1);
+        auto [fromRow, fromCol] = pieces[pieceIdx];
+
+        // Y ~ U({0, ..., |emptySquares|-1}) : choisit la case de destination
+        int squareIdx       = m_uniform.sample(0, static_cast<int>(emptySquares.size()) - 1);
+        auto [toRow, toCol] = emptySquares[squareIdx];
+
+        const Piece* p = m_board.getPiece(fromRow, fromCol);
+
+        const char* pieceName = "";
+        switch (p->getType())
+        {
+        case PieceType::Pawn:   pieceName = "Pion";      break;
+        case PieceType::Rook:   pieceName = "Tour";      break;
+        case PieceType::Knight: pieceName = "Cavalier";  break;
+        case PieceType::Bishop: pieceName = "Fou";       break;
+        case PieceType::Queen:  pieceName = "Dame";      break;
+        default:                pieceName = "Piece";     break;
+        }
+        const char* pieceColor = (p->getColor() == PieceColor::White) ? "B" : "N";
+
+        if (t > 0) logEntry += ", ";
+        logEntry += std::string(pieceColor) + "." + pieceName
+                  + " " + (char)('a' + fromCol) + std::to_string(8 - fromRow)
+                  + "->" + (char)('a' + toCol) + std::to_string(8 - toRow);
+
+        m_board.movePiece(fromRow, fromCol, toRow, toCol);
+    }
 }
 
 // Quand fin de partie
