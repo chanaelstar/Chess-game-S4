@@ -21,6 +21,8 @@ public:
     void orbit(float dTheta, float dPhi);
     void zoom(float delta);
     void pan(float dx, float dy);
+    void setDistance(float d);
+    void setChaosColors(glm::vec3 light, glm::vec3 dark);
 
 private:
     void                           buildBoardMesh();
@@ -55,5 +57,8 @@ private:
     float     m_theta{0.0f};               // angle horizontal (rad)
     float     m_phi{glm::radians(53.13f)}; // angle vertical (rad) ≈ atan2(8,6)
     float     m_distance{10.0f};           // distance au centre
-    glm::vec3 m_target{0.f, 0.f, 0.f};     // point visé
+    glm::vec3 m_target{0.f, 0.f, 0.f};    // point visé
+    // Couleurs des cases (modifiables en mode chaos)
+    glm::vec3 m_colorLight{1.f, 0.871f, 0.455f};
+    glm::vec3 m_colorDark {0.804f, 0.510f, 0.247f};
 };

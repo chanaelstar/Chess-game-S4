@@ -19,6 +19,8 @@ private:
     int                                  promotionRow = -1;
     int                                  promotionCol = -1;
     std::optional<LastMove>              m_lastMove;
+    ImVec4 m_colorLight{1.0f, 0.871f, 0.455f, 1.0f}; // couleur case claire (défaut)
+    ImVec4 m_colorDark {0.804f, 0.510f, 0.247f, 1.0f}; // couleur case sombre (défaut)
 
 public:
     ChessBoard();
@@ -27,6 +29,7 @@ public:
     void                             setSelectedSquare(int row, int col);
     void                             movePiece(int fromRow, int fromCol, int toRow, int toCol);
     void                             removePiece(int row, int col);
+    void                             setChaosColors(ImVec4 light, ImVec4 dark);
     std::vector<std::pair<int, int>> getValidMoves(int row, int col) const;
     PieceColor                       getWinner() const;
     const Piece*                     getPiece(int row, int col) const { return m_grid[row][col]; }

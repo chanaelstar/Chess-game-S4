@@ -6,6 +6,7 @@
 #include "ChessBoard.hpp"
 #include <chrono>
 #include <vector>
+#include "Maths/BetaDistribution.hpp"
 #include "Maths/BinomialDistribution.hpp"
 #include "Maths/ExponentialDistribution.hpp"
 #include "Maths/GeometricDistribution.hpp"
@@ -53,6 +54,7 @@ private:
     BinomialDistribution  m_binomial;
     ExponentialDistribution m_expDist;
     NormalDistribution      m_normal;
+    BetaDistribution        m_beta;
     int                   m_chaosCountdown{1};
     bool                  m_chaosInitialized{false};
     float                 m_spontaneousTimer{0.f};    // secondes avant le prochain chaos spontané

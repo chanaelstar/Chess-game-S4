@@ -2,6 +2,7 @@
 #include <imgui.h>
 #include <utility>
 #include <vector>
+#include <glm/glm.hpp>
 #include "3D/Renderer.hpp"
 
 Game::Game()
@@ -42,6 +43,8 @@ void Game::drawVictoryPopup()
             m_chaosInitialized = false;
             m_chaosCountdown   = 1;
             m_spontaneousTimer = 0.f;
+            m_board.setChaosColors({1.0f, 0.871f, 0.455f, 1.f}, {0.804f, 0.510f, 0.247f, 1.f});
+            m_renderer.setChaosColors({1.f, 0.871f, 0.455f}, {0.804f, 0.510f, 0.247f});
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
@@ -55,6 +58,8 @@ void Game::drawVictoryPopup()
             m_chaosInitialized = false;
             m_chaosCountdown   = 1;
             m_spontaneousTimer = 0.f;
+            m_board.setChaosColors({1.0f, 0.871f, 0.455f, 1.f}, {0.804f, 0.510f, 0.247f, 1.f});
+            m_renderer.setChaosColors({1.f, 0.871f, 0.455f}, {0.804f, 0.510f, 0.247f});
             m_interface.backToMenu();
             ImGui::CloseCurrentPopup();
         }
@@ -85,6 +90,14 @@ void Game::applyBinomialPawnSetup()
         if (blackTrials[col])
             m_board.removePiece(1, col);
     }
+
+    // Couleurs du plateau : chaque composante RGB tirée selon Beta
+    // Cases claires : Beta(6, 2) → E = 0.75 (couleurs vives)
+    // Cases sombres : Beta(2, 6) → E = 0.25 (couleurs sombres)
+    float lr = m_beta.sample(6, 2), lg = m_beta.sample(6, 2), lb = m_beta.sample(6, 2);
+    float dr = m_beta.sample(2, 6), dg = m_beta.sample(2, 6), db = m_beta.sample(2, 6);
+    m_board.setChaosColors({lr, lg, lb, 1.f}, {dr, dg, db, 1.f});
+    m_renderer.setChaosColors({lr, lg, lb}, {dr, dg, db});
 
     std::string log = "[Debut] B(8, 0.3) : "
                       + std::to_string(removedWhite) + " pion(s) blanc(s) et "

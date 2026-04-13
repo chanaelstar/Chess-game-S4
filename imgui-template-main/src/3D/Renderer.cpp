@@ -265,6 +265,18 @@ void Renderer3D::zoom(float delta)
     recomputeViewMatrix();
 }
 
+void Renderer3D::setDistance(float d)
+{
+    m_distance = glm::clamp(d, 3.0f, 30.0f);
+    recomputeViewMatrix();
+}
+
+void Renderer3D::setChaosColors(glm::vec3 light, glm::vec3 dark)
+{
+    m_colorLight = light;
+    m_colorDark  = dark;
+}
+
 void Renderer3D::pan(float dx, float dy)
 {
     glm::vec3 eye;
@@ -369,9 +381,7 @@ void Renderer3D::draw(const ChessBoard& board)
         for (int col = 0; col < 8; ++col)
         {
             bool      isLight = (row + col) % 2 == 0;
-            glm::vec3 color   = isLight
-                                    ? glm::vec3(1.f, 0.871f, 0.455f)
-                                    : glm::vec3(0.804f, 0.510f, 0.247f);
+            glm::vec3 color   = isLight ? m_colorLight : m_colorDark;
 
             glUniform3fv(m_uniColor, 1, glm::value_ptr(color));
 

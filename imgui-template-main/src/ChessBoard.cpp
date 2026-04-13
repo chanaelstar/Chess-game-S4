@@ -27,6 +27,12 @@ void ChessBoard::setSelectedSquare(int row, int col)
     }
 }
 
+void ChessBoard::setChaosColors(ImVec4 light, ImVec4 dark)
+{
+    m_colorLight = light;
+    m_colorDark  = dark;
+}
+
 void ChessBoard::removePiece(int row, int col)
 {
     delete m_grid[row][col];
@@ -147,8 +153,8 @@ bool ChessBoard::drawBoard(PieceColor currentPlayer)
     ImGui::Begin("Chess board");
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 0.f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 0.f));
-    const ImVec4 CHESS_LIGHT = ImVec4(1.0f, 0.871f, 0.455f, 1.0f);
-    const ImVec4 CHESS_DARK  = ImVec4(0.804f, 0.510f, 0.247f, 1.0f);
+    const ImVec4 CHESS_LIGHT = m_colorLight;
+    const ImVec4 CHESS_DARK  = m_colorDark;
     const ImVec4 HIGHLIGHT   = ImVec4(0.415f, 0.658f, 0.309f, 1.0f);
     float        boardSize   = std::min(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
     float        button_size = boardSize / 8.0f;
