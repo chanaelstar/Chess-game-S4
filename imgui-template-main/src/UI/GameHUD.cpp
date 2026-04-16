@@ -1,8 +1,9 @@
 #include "UI/GameHUD.hpp"
 #include <imgui.h>
 
-bool GameHUD::draw(PieceColor currentPlayer, const std::vector<std::string>& history, bool canUndo, int chaosCountdown)
+bool GameHUD::draw(PieceColor currentPlayer, const std::vector<std::string>& history, bool canUndo, bool& pauseRequested, int chaosCountdown)
 {
+    pauseRequested = false;
     bool undoRequested = false;
 
     ImGui::Begin("Partie en cours");
@@ -17,6 +18,10 @@ bool GameHUD::draw(PieceColor currentPlayer, const std::vector<std::string>& his
         undoRequested = true;
     if (!canUndo)
         ImGui::EndDisabled();
+
+    ImGui::SameLine();
+    if (ImGui::Button("II Pause"))
+        pauseRequested = true;
 
     ImGui::Separator();
 

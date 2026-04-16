@@ -22,6 +22,23 @@ void Game::switchPlayer()
                           : PieceColor::White;
 }
 
+void Game::resetGame()
+{
+    m_board.resetBoard();
+    m_moveHistory.clear();
+    m_undoStack.clear();
+    m_currentPlayer    = PieceColor::White;
+    m_winner           = PieceColor::None;
+    m_paused           = false;
+    m_chaosInitialized = false;
+    m_chaosCountdown   = 1;
+    m_spontaneousTimer = 0.f;
+    m_currentLight     = {1.f, 0.871f, 0.455f};
+    m_currentDark      = {0.804f, 0.510f, 0.247f};
+    m_board.setChaosColors({1.0f, 0.871f, 0.455f, 1.f}, {0.804f, 0.510f, 0.247f, 1.f});
+    m_renderer.setChaosColors({1.f, 0.871f, 0.455f}, {0.804f, 0.510f, 0.247f});
+}
+
 void Game::drawVictoryPopup()
 {
     if (!ImGui::IsPopupOpen("Victoire"))
@@ -35,38 +52,56 @@ void Game::drawVictoryPopup()
         ImGui::Spacing();
         if (ImGui::Button("Nouvelle partie", ImVec2(150, 40)))
         {
-            m_board.resetBoard();
-            m_moveHistory.clear();
-            m_undoStack.clear();
-            m_currentPlayer    = PieceColor::White;
-            m_winner           = PieceColor::None;
-            m_chaosInitialized = false;
-            m_chaosCountdown   = 1;
-            m_spontaneousTimer = 0.f;
-            m_currentLight = {1.f, 0.871f, 0.455f};
-            m_currentDark  = {0.804f, 0.510f, 0.247f};
-            m_board.setChaosColors({1.0f, 0.871f, 0.455f, 1.f}, {0.804f, 0.510f, 0.247f, 1.f});
-            m_renderer.setChaosColors({1.f, 0.871f, 0.455f}, {0.804f, 0.510f, 0.247f});
+            resetGame();
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
         if (ImGui::Button("Menu", ImVec2(80, 40)))
         {
-            m_board.resetBoard();
-            m_moveHistory.clear();
-            m_undoStack.clear();
-            m_currentPlayer    = PieceColor::White;
-            m_winner           = PieceColor::None;
-            m_chaosInitialized = false;
-            m_chaosCountdown   = 1;
-            m_spontaneousTimer = 0.f;
-            m_currentLight = {1.f, 0.871f, 0.455f};
-            m_currentDark  = {0.804f, 0.510f, 0.247f};
-            m_board.setChaosColors({1.0f, 0.871f, 0.455f, 1.f}, {0.804f, 0.510f, 0.247f, 1.f});
-            m_renderer.setChaosColors({1.f, 0.871f, 0.455f}, {0.804f, 0.510f, 0.247f});
+            resetGame();
             m_interface.backToMenu();
             ImGui::CloseCurrentPopup();
         }
+        ImGui::EndPopup();
+    }
+}
+
+void Game::drawPauseMenu()
+{
+    if (!ImGui::IsPopupOpen("Pause"))
+        ImGui::OpenPopup("Pause");
+
+    ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    if (ImGui::BeginPopupModal("Pause", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+    {
+        ImGui::Text("Jeu en pause");
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        if (ImGui::Button("Reprendre", ImVec2(200, 40)))
+        {
+            m_paused = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::Spacing();
+
+        if (ImGui::Button("Menu principal", ImVec2(200, 40)))
+        {
+            resetGame();
+            m_interface.backToMenu();
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::Spacing();
+
+        if (ImGui::Button("Quitter l'application", ImVec2(200, 40)))
+        {
+            m_shouldQuit = true;
+            ImGui::CloseCurrentPopup();
+        }
+
         ImGui::EndPopup();
     }
 }
@@ -235,7 +270,46 @@ void Game::update()
         }
     }
 
+    // Toggle pause avec Echap
+    if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+        m_paused = !m_paused;
+
     m_renderer.draw(m_board);
+
+    bool pauseRequested = false;
+    bool undoRequested  = m_hud.draw(m_currentPlayer, m_moveHistory, !m_undoStack.empty(), pauseRequested);
+    if (pauseRequested)
+        m_paused = true;
+
+    if (m_paused)
+    {
+        // Afficher le plateau 2D (non interactif) pour qu'il reste visible
+        ImGui::BeginDisabled();
+        m_board.drawBoard(m_currentPlayer);
+        ImGui::EndDisabled();
+
+        drawPauseMenu();
+
+        ImGui::SetNextWindowSize(ImVec2(Renderer3D::FBO_WIDTH, Renderer3D::FBO_HEIGHT + 20), ImGuiCond_FirstUseEver);
+        if (ImGui::Begin("Vue 3D"))
+        {
+            ImVec2 avail  = ImGui::GetContentRegionAvail();
+            float  aspect = (float)Renderer3D::FBO_WIDTH / Renderer3D::FBO_HEIGHT;
+            float  drawW  = avail.x;
+            float  drawH  = drawW / aspect;
+            if (drawH > avail.y) { drawH = avail.y; drawW = drawH * aspect; }
+            float offX = (avail.x - drawW) * 0.5f;
+            float offY = (avail.y - drawH) * 0.5f;
+            ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + offX, ImGui::GetCursorPosY() + offY));
+            ImGui::Image((ImTextureID)(intptr_t)m_renderer.getTextureId(), ImVec2(drawW, drawH), ImVec2(0, 1), ImVec2(1, 0));
+        }
+        ImGui::End();
+
+        if (m_winner != PieceColor::None)
+            drawVictoryPopup();
+        return;
+    }
+
     // Sauvegarder l'état AVANT le coup (drawBoard applique le coup en interne)
     TurnSnapshot preMove{m_board.takeSnapshot(), m_currentPlayer, m_moveHistory};
     if (m_board.drawBoard(m_currentPlayer))
@@ -289,7 +363,7 @@ void Game::update()
         }
     }
 
-    if (m_hud.draw(m_currentPlayer, m_moveHistory, !m_undoStack.empty()) && !m_undoStack.empty())
+    if (undoRequested && !m_undoStack.empty())
     {
         auto& snap = m_undoStack.back();
         m_board.restoreSnapshot(snap.board);

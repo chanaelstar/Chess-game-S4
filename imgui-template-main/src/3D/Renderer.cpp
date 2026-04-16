@@ -4,6 +4,7 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "3D/ModelLoader.hpp"
 #include "ChessBoard.hpp"
 
 
@@ -315,6 +316,25 @@ void Renderer3D::init()
     );
     m_skyboxUniVP = glGetUniformLocation(m_skyboxProgram->getGLId(), "uViewProj");
 
+    // Shader pièces (normales + éclairage diffus)
+    m_pieceProgram = glimac::loadProgram(
+        std::string(CMAKE_SOURCE_DIR) + "/assets/shaders/piece.vs.glsl",
+        std::string(CMAKE_SOURCE_DIR) + "/assets/shaders/piece.fs.glsl"
+    );
+    m_pieceProgram->use();
+    m_pieceUniMVP   = glGetUniformLocation(m_pieceProgram->getGLId(), "uMVPMatrix");
+    m_pieceUniModel = glGetUniformLocation(m_pieceProgram->getGLId(), "uModelMatrix");
+    m_pieceUniColor = glGetUniformLocation(m_pieceProgram->getGLId(), "uColor");
+
+    // Chargement des pièces depuis le fichier OBJ unique
+    const std::string objFile = std::string(CMAKE_SOURCE_DIR) + "/assets/models/Chess_set_game.obj";
+    m_pieceModels[static_cast<int>(PieceType::Pawn)]   = loadOBJObject(objFile, "Pedone1");
+    m_pieceModels[static_cast<int>(PieceType::Rook)]   = loadOBJObject(objFile, "Torre1");
+    m_pieceModels[static_cast<int>(PieceType::Knight)] = loadOBJObject(objFile, "Cavallo1");
+    m_pieceModels[static_cast<int>(PieceType::Bishop)] = loadOBJObject(objFile, "Alfiere1");
+    m_pieceModels[static_cast<int>(PieceType::Queen)]  = loadOBJObject(objFile, "Regina");
+    m_pieceModels[static_cast<int>(PieceType::King)]   = loadOBJObject(objFile, "Re");
+
     glEnable(GL_DEPTH_TEST);
 
     m_projMatrix = glm::perspective(glm::radians(45.f), (float)FBO_WIDTH / FBO_HEIGHT, 0.1f, 100.f);
@@ -390,47 +410,70 @@ void Renderer3D::draw(const ChessBoard& board)
         }
     }
 
-    // Draw pieces
-    struct PieceShape {
-        float radius, height;
-    };
-    auto getShape = [](PieceType type) -> PieceShape {
+    // Rendu des pièces avec les modèles OBJ
+    auto targetHeight = [](PieceType type) -> float {
         switch (type)
         {
-        case PieceType::Pawn: return {0.22f, 0.40f};
-        case PieceType::Rook: return {0.26f, 0.50f};
-        case PieceType::Knight: return {0.24f, 0.55f};
-        case PieceType::Bishop: return {0.20f, 0.65f};
-        case PieceType::Queen: return {0.25f, 0.80f};
-        case PieceType::King: return {0.27f, 0.90f};
-        default: return {0.22f, 0.40f};
+        case PieceType::Pawn:   return 0.40f;
+        case PieceType::Rook:   return 0.50f;
+        case PieceType::Knight: return 0.55f;
+        case PieceType::Bishop: return 0.65f;
+        case PieceType::Queen:  return 0.80f;
+        case PieceType::King:   return 0.90f;
+        default:                return 0.45f;
         }
     };
 
-    glBindVertexArray(m_pieceVao);
-    for (int row = 0; row < 8; ++row)
+    if (m_pieceProgram)
     {
-        for (int col = 0; col < 8; ++col)
+        m_pieceProgram->use();
+        for (int row = 0; row < 8; ++row)
         {
-            const Piece* piece = board.getPiece(row, col);
-            if (!piece)
-                continue;
+            for (int col = 0; col < 8; ++col)
+            {
+                const Piece* piece = board.getPiece(row, col);
+                if (!piece)
+                    continue;
 
-            auto [radius, height] = getShape(piece->getType());
+                const LoadedMesh& mesh = m_pieceModels[static_cast<int>(piece->getType())];
+                if (!mesh.valid)
+                    continue;
 
-            // Centre de la case en coordonnées monde, posé sur le dessus du plateau
-            float     cx    = col - 4.f + 0.5f;
-            float     cz    = row - 4.f + 0.5f;
-            glm::mat4 model = glm::translate(glm::mat4(1.f), glm::vec3(cx, 0.45f, cz))
-                              * glm::scale(glm::mat4(1.f), glm::vec3(radius, height, radius));
-            glUniformMatrix4fv(m_uniMVP, 1, GL_FALSE, glm::value_ptr(mvp * model));
+                float cx = col - 4.f + 0.5f;
+                float cz = row - 4.f + 0.5f;
 
-            glm::vec3 color = (piece->getColor() == PieceColor::White)
-                                  ? glm::vec3(0.95f, 0.93f, 0.85f)
-                                  : glm::vec3(0.12f, 0.08f, 0.05f);
-            glUniform3fv(m_uniColor, 1, glm::value_ptr(color));
+                // Centre du bounding box en XZ (les modèles ne sont pas centrés à l'origine)
+                glm::vec3 bboxCenter = (mesh.bboxMin + mesh.bboxMax) * 0.5f;
 
-            glDrawArrays(GL_TRIANGLES, 0, m_pieceVertexCount);
+                // Mise à l'échelle : cible la hauteur voulue
+                float modelH = mesh.bboxMax.y - mesh.bboxMin.y;
+                float scale  = (modelH > 0.f) ? targetHeight(piece->getType()) / modelH : 1.f;
+
+                // Rotation spécifique par type (cavalier blanc face à l'adversaire)
+                float extraRotY = 0.f;
+                if (piece->getType() == PieceType::Knight && piece->getColor() == PieceColor::White)
+                    extraRotY = glm::radians(180.f);
+
+                // 1) Recentre le modèle (XZ) et pose la base à y=0
+                // 2) Rotation éventuelle
+                // 3) Met à l'échelle
+                // 4) Translate vers la case cible (y=0.45 = dessus du plateau)
+                glm::mat4 model = glm::translate(glm::mat4(1.f), glm::vec3(cx, 0.45f, cz))
+                                  * glm::scale(glm::mat4(1.f), glm::vec3(scale))
+                                  * glm::rotate(glm::mat4(1.f), extraRotY, glm::vec3(0.f, 1.f, 0.f))
+                                  * glm::translate(glm::mat4(1.f), glm::vec3(-bboxCenter.x, -mesh.bboxMin.y, -bboxCenter.z));
+
+                glm::vec3 color = (piece->getColor() == PieceColor::White)
+                                      ? glm::vec3(0.95f, 0.93f, 0.85f)
+                                      : glm::vec3(0.12f, 0.08f, 0.05f);
+
+                glUniformMatrix4fv(m_pieceUniMVP,   1, GL_FALSE, glm::value_ptr(mvp * model));
+                glUniformMatrix4fv(m_pieceUniModel, 1, GL_FALSE, glm::value_ptr(model));
+                glUniform3fv(m_pieceUniColor, 1, glm::value_ptr(color));
+
+                glBindVertexArray(mesh.vao);
+                glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+            }
         }
     }
 

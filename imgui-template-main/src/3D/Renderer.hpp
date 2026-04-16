@@ -3,7 +3,10 @@
 #include <glimac/Program.hpp>
 #include <glimac/Sphere.hpp>
 #include <glm/glm.hpp>
+#include <array>
 #include <optional>
+#include "3D/ModelLoader.hpp"
+#include "Piece.hpp"
 
 class ChessBoard;
 
@@ -43,6 +46,12 @@ private:
     std::optional<glimac::Program> m_skyboxProgram;
     GLint                          m_skyboxUniVP{};
     std::optional<glimac::Program> m_program;
+    // Shader + modèles 3D des pièces
+    std::optional<glimac::Program> m_pieceProgram;
+    GLint                          m_pieceUniMVP{};
+    GLint                          m_pieceUniModel{};
+    GLint                          m_pieceUniColor{};
+    std::array<LoadedMesh, 7>      m_pieceModels; // indexé par PieceType (0=None…6=King)
     GLint                          m_uniMVP{};
     GLint                          m_uniColor{};
     GLint                          m_uniTexture{};

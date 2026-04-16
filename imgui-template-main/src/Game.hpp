@@ -40,12 +40,15 @@ private:
     PieceColor                m_winner = PieceColor::None;
     Renderer3D                m_renderer;
     bool                      m_shouldQuit{false};
+    bool                      m_paused{false};
     GameHUD                   m_hud;
     std::vector<std::string>  m_moveHistory;
     std::vector<TurnSnapshot> m_undoStack;
 
     void switchPlayer();
+    void resetGame();
     void drawVictoryPopup();
+    void drawPauseMenu();
     void applyChaosEvent(std::string& logEntry);
     void applyBinomialPawnSetup();
     void perturbColors(); // Dérive de couleur via N(0, 0.05²)             // Mode Infernal : retrait de pions au démarrage

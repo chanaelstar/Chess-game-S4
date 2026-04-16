@@ -5,5 +5,5 @@
 
 class GameHUD {
 public:
-    bool draw(PieceColor currentPlayer, const std::vector<std::string>& history, bool canUndo, int chaosCountdown = -1);
+    bool draw(PieceColor currentPlayer, const std::vector<std::string>& history, bool canUndo, bool& pauseRequested, int chaosCountdown = -1);
 };
