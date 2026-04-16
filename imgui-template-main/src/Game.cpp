@@ -43,6 +43,8 @@ void Game::drawVictoryPopup()
             m_chaosInitialized = false;
             m_chaosCountdown   = 1;
             m_spontaneousTimer = 0.f;
+            m_currentLight = {1.f, 0.871f, 0.455f};
+            m_currentDark  = {0.804f, 0.510f, 0.247f};
             m_board.setChaosColors({1.0f, 0.871f, 0.455f, 1.f}, {0.804f, 0.510f, 0.247f, 1.f});
             m_renderer.setChaosColors({1.f, 0.871f, 0.455f}, {0.804f, 0.510f, 0.247f});
             ImGui::CloseCurrentPopup();
@@ -58,6 +60,8 @@ void Game::drawVictoryPopup()
             m_chaosInitialized = false;
             m_chaosCountdown   = 1;
             m_spontaneousTimer = 0.f;
+            m_currentLight = {1.f, 0.871f, 0.455f};
+            m_currentDark  = {0.804f, 0.510f, 0.247f};
             m_board.setChaosColors({1.0f, 0.871f, 0.455f, 1.f}, {0.804f, 0.510f, 0.247f, 1.f});
             m_renderer.setChaosColors({1.f, 0.871f, 0.455f}, {0.804f, 0.510f, 0.247f});
             m_interface.backToMenu();
@@ -96,6 +100,8 @@ void Game::applyBinomialPawnSetup()
     // Cases sombres : Beta(2, 6) → E = 0.25 (couleurs sombres)
     float lr = m_beta.sample(6, 2), lg = m_beta.sample(6, 2), lb = m_beta.sample(6, 2);
     float dr = m_beta.sample(2, 6), dg = m_beta.sample(2, 6), db = m_beta.sample(2, 6);
+    m_currentLight = {lr, lg, lb};
+    m_currentDark  = {dr, dg, db};
     m_board.setChaosColors({lr, lg, lb, 1.f}, {dr, dg, db, 1.f});
     m_renderer.setChaosColors({lr, lg, lb}, {dr, dg, db});
 
@@ -103,6 +109,24 @@ void Game::applyBinomialPawnSetup()
                       + std::to_string(removedWhite) + " pion(s) blanc(s) et "
                       + std::to_string(removedBlack) + " pion(s) noir(s) absents";
     m_moveHistory.push_back(log);
+}
+
+void Game::perturbColors()
+{
+    // Dérive de couleur : chaque composante RGB ~ N(0, 0.05²)
+    // Les perturbations s'accumulent — la dérive est régulière (loi des grands nombres)
+    auto perturb = [&](float val) -> float {
+        return glm::clamp(val + m_normal.sample(0.f, 0.05f), 0.f, 1.f);
+    };
+
+    m_currentLight = {perturb(m_currentLight.r), perturb(m_currentLight.g), perturb(m_currentLight.b)};
+    m_currentDark  = {perturb(m_currentDark.r),  perturb(m_currentDark.g),  perturb(m_currentDark.b)};
+
+    m_board.setChaosColors(
+        {m_currentLight.r, m_currentLight.g, m_currentLight.b, 1.f},
+        {m_currentDark.r,  m_currentDark.g,  m_currentDark.b,  1.f}
+    );
+    m_renderer.setChaosColors(m_currentLight, m_currentDark);
 }
 
 void Game::applyChaosEvent(std::string& logEntry)
@@ -202,10 +226,10 @@ void Game::update()
             applyChaosEvent(chaosLog);
             if (!chaosLog.empty())
                 m_moveHistory.push_back("[Spontané] " + chaosLog.substr(8));
-            // Secousse caméra : (dTheta, dPhi) ~ N(0, 0.15²)
-            float dTheta, dPhi;
-            m_normal.samplePair(0.f, 0.15f, dTheta, dPhi);
-            m_renderer.orbit(dTheta, dPhi);
+            // Secousse caméra : Cauchy(0, 1.5) sur theta, Cauchy(0, 0.05) sur phi
+            m_renderer.orbit(m_cauchy.sample(0.f, 1.5f), m_cauchy.sample(0.f, 0.05f));
+            // Dérive de couleur : N(0, 0.05²) sur chaque composante RGB
+            perturbColors();
             // Prochain chaos spontané : X ~ Exp(1/30)
             m_spontaneousTimer = m_expDist.sample(1.f / 30.f);
         }
@@ -234,10 +258,10 @@ void Game::update()
                     applyChaosEvent(chaosLog);
                     if (!chaosLog.empty())
                         m_moveHistory.push_back(chaosLog);
-                    // Secousse caméra : (dTheta, dPhi) ~ N(0, 0.15²)
-                    float dTheta, dPhi;
-                    m_normal.samplePair(0.f, 0.15f, dTheta, dPhi);
-                    m_renderer.orbit(dTheta, dPhi);
+                    // Secousse caméra : Cauchy(0, 1.5) sur theta, Cauchy(0, 0.05) sur phi
+                    m_renderer.orbit(m_cauchy.sample(0.f, 1.5f), m_cauchy.sample(0.f, 0.05f));
+                    // Dérive de couleur : N(0, 0.05²) sur chaque composante RGB
+                    perturbColors();
                     // Prochain événement dans X ~ Geom(0.4) tours (E[X] = 2.5 tours)
                     m_chaosCountdown = m_geom.sample(0.4);
                 }

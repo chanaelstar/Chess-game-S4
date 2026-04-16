@@ -1,5 +1,5 @@
 #include "NormalDistribution.hpp"
-#include <cmath> // log, cos, sin, sqrt
+#include <cmath>
 
 static constexpr double PI = 3.14159265358979323846;
 
