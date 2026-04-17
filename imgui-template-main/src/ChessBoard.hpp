@@ -33,6 +33,7 @@ public:
     std::vector<std::pair<int, int>> getValidMoves(int row, int col) const;
     PieceColor                       getWinner() const;
     const Piece*                     getPiece(int row, int col) const { return m_grid[row][col]; }
+    std::pair<int,int>               getSelectedSquare() const { return {selectedRow, selectedCol}; }
     std::optional<LastMove>          getLastMove() const { return m_lastMove; }
     BoardSnapshot                    takeSnapshot() const;
     void                             restoreSnapshot(const BoardSnapshot& snapshot);

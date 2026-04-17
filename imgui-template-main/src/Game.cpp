@@ -396,16 +396,60 @@ void Game::update()
             ImVec2(0, 1), ImVec2(1, 0) // flip vertical (OpenGL vs ImGui convention)
         );
 
+        // Touche P : bascule Trackball ↔ Vue Pièce
+        if (ImGui::IsKeyPressed(ImGuiKey_P))
+        {
+            if (m_renderer.isPieceView())
+            {
+                m_renderer.enterTrackball();
+            }
+            else
+            {
+                auto [selRow, selCol] = m_board.getSelectedSquare();
+                if (selRow != -1)
+                {
+                    const Piece* p = m_board.getPiece(selRow, selCol);
+                    float pieceH = 0.45f;
+                    if (p) {
+                        switch (p->getType()) {
+                        case PieceType::Pawn:   pieceH += 0.40f; break;
+                        case PieceType::Rook:   pieceH += 0.50f; break;
+                        case PieceType::Knight: pieceH += 0.55f; break;
+                        case PieceType::Bishop: pieceH += 0.65f; break;
+                        case PieceType::Queen:  pieceH += 0.80f; break;
+                        case PieceType::King:   pieceH += 0.90f; break;
+                        default: break;
+                        }
+                    }
+                    float cx = selCol - 4.f + 0.5f;
+                    float cz = selRow - 4.f + 0.5f;
+                    m_renderer.enterPieceView(glm::vec3(cx, pieceH, cz));
+                }
+            }
+        }
+
         if (ImGui::IsItemHovered())
         {
             const ImGuiIO& io = ImGui::GetIO();
             if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-                m_renderer.orbit(-io.MouseDelta.x * 0.005f, io.MouseDelta.y * 0.005f);
-            if (io.MouseWheel != 0.0f)
-                m_renderer.zoom(io.MouseWheel * 1.5f);
-            if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
-                m_renderer.pan(io.MouseDelta.x, io.MouseDelta.y);
+            {
+                if (m_renderer.isPieceView())
+                    m_renderer.lookAround(io.MouseDelta.x * 0.005f, -io.MouseDelta.y * 0.005f);
+                else
+                    m_renderer.orbit(-io.MouseDelta.x * 0.005f, io.MouseDelta.y * 0.005f);
+            }
+            if (!m_renderer.isPieceView())
+            {
+                if (io.MouseWheel != 0.0f)
+                    m_renderer.zoom(io.MouseWheel * 1.5f);
+                if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+                    m_renderer.pan(io.MouseDelta.x, io.MouseDelta.y);
+            }
         }
+
+        // Indicateur de mode caméra
+        ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + offX + 6, ImGui::GetCursorPosY() - drawH + 6));
+        ImGui::TextDisabled(m_renderer.isPieceView() ? "[P] Vue Piece  (P = retour)" : "[P] Trackball  (P = vue piece)");
     }
     ImGui::End();
 

@@ -267,58 +267,10 @@ void Renderer3D::buildBoardMesh()
     glBindVertexArray(0);
 }
 
-void Renderer3D::recomputeViewMatrix()
-{
-    glm::vec3 eye;
-    eye.x        = m_target.x + m_distance * std::cos(m_phi) * std::sin(m_theta);
-    eye.y        = m_target.y + m_distance * std::sin(m_phi);
-    eye.z        = m_target.z + m_distance * std::cos(m_phi) * std::cos(m_theta);
-    m_viewMatrix = glm::lookAt(eye, m_target, glm::vec3(0.f, 1.f, 0.f));
-}
-
-void Renderer3D::orbit(float dTheta, float dPhi)
-{
-    m_theta += dTheta;
-    const float TWO_PI = 2.0f * glm::pi<float>();
-    if (m_theta > glm::pi<float>())
-        m_theta -= TWO_PI;
-    if (m_theta < -glm::pi<float>())
-        m_theta += TWO_PI;
-    m_phi = glm::clamp(m_phi + dPhi, glm::radians(5.f), glm::radians(89.f));
-    recomputeViewMatrix();
-}
-
-void Renderer3D::zoom(float delta)
-{
-    m_distance = glm::clamp(m_distance - delta, 3.0f, 30.0f);
-    recomputeViewMatrix();
-}
-
-void Renderer3D::setDistance(float d)
-{
-    m_distance = glm::clamp(d, 3.0f, 30.0f);
-    recomputeViewMatrix();
-}
-
 void Renderer3D::setChaosColors(glm::vec3 light, glm::vec3 dark)
 {
     m_colorLight = light;
     m_colorDark  = dark;
-}
-
-void Renderer3D::pan(float dx, float dy)
-{
-    glm::vec3 eye;
-    eye.x             = m_target.x + m_distance * std::cos(m_phi) * std::sin(m_theta);
-    eye.y             = m_target.y + m_distance * std::sin(m_phi);
-    eye.z             = m_target.z + m_distance * std::cos(m_phi) * std::cos(m_theta);
-    glm::vec3 forward = glm::normalize(m_target - eye);
-    glm::vec3 right   = glm::normalize(glm::cross(forward, glm::vec3(0.f, 1.f, 0.f)));
-    glm::vec3 up      = glm::normalize(glm::cross(right, forward));
-    float     scale   = m_distance * 0.01f;
-    m_target -= right * (dx * scale);
-    m_target += up * (dy * scale);
-    recomputeViewMatrix();
 }
 
 void Renderer3D::init()
@@ -392,7 +344,6 @@ void Renderer3D::init()
     glEnable(GL_DEPTH_TEST);
 
     m_projMatrix = glm::perspective(glm::radians(45.f), (float)FBO_WIDTH / FBO_HEIGHT, 0.1f, 100.f);
-    recomputeViewMatrix();
 
     // Création du FBO
     glGenTextures(1, &m_fboTexture);
@@ -426,7 +377,8 @@ void Renderer3D::draw(const ChessBoard& board)
     glDepthMask(GL_FALSE);
     glDepthFunc(GL_LEQUAL);
     m_skyboxProgram->use();
-    glm::mat4 skyboxVP = m_projMatrix * glm::mat4(glm::mat3(m_viewMatrix));
+    glm::mat4 viewMatrix = m_camera.getViewMatrix();
+    glm::mat4 skyboxVP   = m_projMatrix * glm::mat4(glm::mat3(viewMatrix));
     glUniformMatrix4fv(m_skyboxUniVP, 1, GL_FALSE, glm::value_ptr(skyboxVP));
     glBindVertexArray(m_skyboxVao);
     glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -438,7 +390,7 @@ void Renderer3D::draw(const ChessBoard& board)
     // --- Plateau, bords et pièces ---
     m_program->use();
 
-    glm::mat4 mvp = m_projMatrix * m_viewMatrix;
+    glm::mat4 mvp = m_projMatrix * viewMatrix;
     glUniformMatrix4fv(m_uniMVP, 1, GL_FALSE, glm::value_ptr(mvp));
     m_lighting.applyToBoardShader(m_uniLightMode);
     glUniform1i(m_uniUseTexture, 0);
