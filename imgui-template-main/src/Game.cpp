@@ -225,6 +225,8 @@ void Game::handle3DClick(int row, int col)
                 {
                     m_moveHistory.push_back(formatMove(m_currentPlayer, *lm));
                     m_renderer.startPieceAnimation(lm->fromRow, lm->fromCol, lm->toRow, lm->toCol);
+                    if (m_renderer.isPieceView())
+                        m_renderer.updatePieceViewTarget(lm->toRow, lm->toCol);
                 }
                 handlePostMove();
                 return;
@@ -436,6 +438,8 @@ void Game::update()
         {
             m_moveHistory.push_back(formatMove(m_currentPlayer, *lm));
             m_renderer.startPieceAnimation(lm->fromRow, lm->fromCol, lm->toRow, lm->toCol);
+            if (m_renderer.isPieceView())
+                m_renderer.updatePieceViewTarget(lm->toRow, lm->toCol);
         }
         handlePostMove();
     }
@@ -498,7 +502,7 @@ void Game::update()
                     }
                     float cx = selCol - 4.f + 0.5f;
                     float cz = selRow - 4.f + 0.5f;
-                    m_renderer.enterPieceView(glm::vec3(cx, pieceH, cz));
+                    m_renderer.enterPieceView(selRow, selCol, glm::vec3(cx, pieceH, cz));
                 }
             }
         }

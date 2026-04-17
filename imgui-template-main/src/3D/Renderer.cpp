@@ -49,6 +49,15 @@ void Renderer3D::draw(const ChessBoard& board, float dt)
     glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // Vue Pièce : la caméra suit la pièce pendant son animation (bonus §5)
+    if (m_camera.getMode() == CameraMode::PieceView && m_pvRow >= 0)
+    {
+        glm::vec3 base(m_pvCol - 4.f + 0.5f, 0.45f, m_pvRow - 4.f + 0.5f);
+        m_animator.getAnimatedPos(m_pvRow, m_pvCol, base); // modifie base si pièce en vol
+        base.y += m_pvHeightOffset;                        // sommet de la pièce
+        m_camera.setPiecePosition(base);
+    }
+
     const glm::mat4 viewMatrix = m_camera.getViewMatrix();
     const glm::mat4 mvp        = m_projMatrix * viewMatrix;
 
