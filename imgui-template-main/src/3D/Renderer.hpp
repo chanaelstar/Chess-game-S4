@@ -5,9 +5,11 @@
 #include <glm/glm.hpp>
 #include <array>
 #include <optional>
+#include "3D/BoardHighlight.hpp"
 #include "3D/CameraController.hpp"
 #include "3D/LightingManager.hpp"
 #include "3D/ModelLoader.hpp"
+#include "3D/RayCaster.hpp"
 #include "Piece.hpp"
 
 class ChessBoard;
@@ -36,6 +38,13 @@ public:
     // Éclairage / couleurs
     void setChaosColors(glm::vec3 light, glm::vec3 dark);
     void setCurrentPlayer(PieceColor p) { m_lighting.setCurrentPlayer(p); }
+    // Sélection / hover (§3.6)
+    std::pair<int,int> pickSquare(float mouseRelX, float mouseRelY, float imgW, float imgH) const;
+    void setHoverSquare(int row, int col) { m_hoverRow = row; m_hoverCol = col; }
+    void setSelectionDisplay(int row, int col, std::vector<std::pair<int,int>> moves)
+    {
+        m_selRow = row; m_selCol = col; m_validMoves = std::move(moves);
+    }
 
 private:
     void buildBoardMesh();
@@ -78,4 +87,11 @@ private:
     // Couleurs des cases (modifiables en mode chaos)
     glm::vec3 m_colorLight{1.f, 0.871f, 0.455f};
     glm::vec3 m_colorDark {0.804f, 0.510f, 0.247f};
+    // Surbrillance des cases (§3.6)
+    BoardHighlight                  m_highlight{};
+    int                             m_hoverRow{-1};
+    int                             m_hoverCol{-1};
+    int                             m_selRow{-1};
+    int                             m_selCol{-1};
+    std::vector<std::pair<int,int>> m_validMoves;
 };

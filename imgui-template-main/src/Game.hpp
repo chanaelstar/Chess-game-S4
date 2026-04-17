@@ -51,7 +51,9 @@ private:
     void drawPauseMenu();
     void applyChaosEvent(std::string& logEntry);
     void applyBinomialPawnSetup();
-    void perturbColors(); // Dérive de couleur via N(0, 0.05²)             // Mode Infernal : retrait de pions au démarrage
+    void perturbColors();
+    void handlePostMove();           // logique commune après tout coup (2D ou 3D)
+    void handle3DClick(int row, int col); // sélection / déplacement depuis la vue 3D
 
     UniformDiscrete       m_uniform;
     GeometricDistribution m_geom;

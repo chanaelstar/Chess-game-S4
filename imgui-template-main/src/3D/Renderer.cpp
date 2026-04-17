@@ -267,6 +267,13 @@ void Renderer3D::buildBoardMesh()
     glBindVertexArray(0);
 }
 
+std::pair<int,int> Renderer3D::pickSquare(float mx, float my, float imgW, float imgH) const
+{
+    return RayCaster::pickBoardSquare(
+        {mx, my}, {imgW, imgH},
+        m_projMatrix, m_camera.getViewMatrix());
+}
+
 void Renderer3D::setChaosColors(glm::vec3 light, glm::vec3 dark)
 {
     m_colorLight = light;
@@ -331,6 +338,7 @@ void Renderer3D::init()
     }
 
     m_lighting.start();
+    m_highlight.init();
 
     // Chargement des pièces depuis le fichier OBJ unique
     const std::string objFile = std::string(CMAKE_SOURCE_DIR) + "/assets/models/Chess_set_game.obj";
@@ -421,6 +429,9 @@ void Renderer3D::draw(const ChessBoard& board)
     }
     glUniform1i(m_uniUseTexture, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Overlays de surbrillance (hover / sélection / coups valides)
+    m_highlight.draw(mvp, m_hoverRow, m_hoverCol, m_selRow, m_selCol, m_validMoves);
 
     // Rendu des pièces avec les modèles OBJ
     auto targetHeight = [](PieceType type) -> float {

@@ -164,6 +164,81 @@ void Game::perturbColors()
     m_renderer.setChaosColors(m_currentLight, m_currentDark);
 }
 
+void Game::handlePostMove()
+{
+    m_winner = m_board.getWinner();
+    if (m_winner == PieceColor::None)
+    {
+        // Mode Infernal : événement chaos cadencé par une loi géométrique
+        if (m_interface.getGameMode() == GameMode::RandomMode)
+        {
+            --m_chaosCountdown;
+            if (m_chaosCountdown <= 0)
+            {
+                std::string chaosLog;
+                applyChaosEvent(chaosLog);
+                if (!chaosLog.empty())
+                    m_moveHistory.push_back(chaosLog);
+                m_renderer.orbit(m_cauchy.sample(0.f, 1.5f), m_cauchy.sample(0.f, 0.05f));
+                perturbColors();
+                m_chaosCountdown = m_geom.sample(0.4);
+            }
+        }
+        m_winner = m_board.getWinner();
+    }
+    if (m_winner == PieceColor::None)
+    {
+        switchPlayer();
+        if (m_interface.getGameMode() == GameMode::OnePlayer
+            && m_currentPlayer == PieceColor::Black)
+        {
+            auto aiMove = AIPlayer::getMove(m_board, PieceColor::Black);
+            if (aiMove)
+            {
+                m_board.movePiece(aiMove->fromRow, aiMove->fromCol, aiMove->toRow, aiMove->toCol);
+                if (auto lm = m_board.getLastMove())
+                    m_moveHistory.push_back(formatMove(PieceColor::Black, *lm));
+                m_winner = m_board.getWinner();
+                if (m_winner == PieceColor::None)
+                    switchPlayer();
+            }
+        }
+    }
+}
+
+void Game::handle3DClick(int row, int col)
+{
+    auto [selRow, selCol] = m_board.getSelectedSquare();
+
+    if (selRow >= 0)
+    {
+        // Vérifier si (row, col) est un coup valide
+        auto validMoves = m_board.getValidMoves(selRow, selCol);
+        for (auto [r, c] : validMoves)
+        {
+            if (r == row && c == col)
+            {
+                // Exécuter le coup
+                TurnSnapshot preMove{m_board.takeSnapshot(), m_currentPlayer, m_moveHistory};
+                m_undoStack.push_back(preMove);
+                m_board.movePiece(selRow, selCol, row, col);
+                m_board.setSelectedSquare(-1, -1);
+                if (auto lm = m_board.getLastMove())
+                    m_moveHistory.push_back(formatMove(m_currentPlayer, *lm));
+                handlePostMove();
+                return;
+            }
+        }
+    }
+
+    // Sélectionner la pièce du joueur courant
+    const Piece* p = m_board.getPiece(row, col);
+    if (p && p->getColor() == m_currentPlayer)
+        m_board.setSelectedSquare(row, col);
+    else
+        m_board.setSelectedSquare(-1, -1);
+}
+
 void Game::applyChaosEvent(std::string& logEntry)
 {
     // X ~ Poisson(1.5) : nombre de pièces téléportées lors de cet événement
@@ -306,6 +381,15 @@ void Game::update()
         }
         ImGui::End();
 
+        // Synchroniser sélection même en pause
+        {
+            auto [selR, selC] = m_board.getSelectedSquare();
+            std::vector<std::pair<int,int>> validMoves;
+            if (selR >= 0)
+                validMoves = m_board.getValidMoves(selR, selC);
+            m_renderer.setSelectionDisplay(selR, selC, std::move(validMoves));
+        }
+
         if (m_winner != PieceColor::None)
             drawVictoryPopup();
         return;
@@ -316,52 +400,9 @@ void Game::update()
     if (m_board.drawBoard(m_currentPlayer))
     {
         m_undoStack.push_back(preMove);
-
         if (auto lm = m_board.getLastMove())
             m_moveHistory.push_back(formatMove(m_currentPlayer, *lm));
-
-        m_winner = m_board.getWinner();
-        if (m_winner == PieceColor::None)
-        {
-            // Mode Infernal : événement chaos cadencé par une loi géométrique
-            if (m_interface.getGameMode() == GameMode::RandomMode)
-            {
-                --m_chaosCountdown;
-                if (m_chaosCountdown <= 0)
-                {
-                    std::string chaosLog;
-                    applyChaosEvent(chaosLog);
-                    if (!chaosLog.empty())
-                        m_moveHistory.push_back(chaosLog);
-                    // Secousse caméra : Cauchy(0, 1.5) sur theta, Cauchy(0, 0.05) sur phi
-                    m_renderer.orbit(m_cauchy.sample(0.f, 1.5f), m_cauchy.sample(0.f, 0.05f));
-                    // Dérive de couleur : N(0, 0.05²) sur chaque composante RGB
-                    perturbColors();
-                    // Prochain événement dans X ~ Geom(0.4) tours (E[X] = 2.5 tours)
-                    m_chaosCountdown = m_geom.sample(0.4);
-                }
-            }
-
-            m_winner = m_board.getWinner();
-        }
-        if (m_winner == PieceColor::None)
-        {
-            switchPlayer();
-            if (m_interface.getGameMode() == GameMode::OnePlayer
-                && m_currentPlayer == PieceColor::Black)
-            {
-                auto aiMove = AIPlayer::getMove(m_board, PieceColor::Black);
-                if (aiMove)
-                {
-                    m_board.movePiece(aiMove->fromRow, aiMove->fromCol, aiMove->toRow, aiMove->toCol);
-                    if (auto lm = m_board.getLastMove())
-                        m_moveHistory.push_back(formatMove(PieceColor::Black, *lm));
-                    m_winner = m_board.getWinner();
-                    if (m_winner == PieceColor::None)
-                        switchPlayer();
-                }
-            }
-        }
+        handlePostMove();
     }
 
     if (undoRequested && !m_undoStack.empty())
@@ -386,14 +427,13 @@ void Game::update()
             drawH = avail.y;
             drawW = drawH * aspect;
         }
-        // Centrer l'image dans la zone disponible
         float offX = (avail.x - drawW) * 0.5f;
         float offY = (avail.y - drawH) * 0.5f;
         ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + offX, ImGui::GetCursorPosY() + offY));
         ImGui::Image(
             (ImTextureID)(intptr_t)m_renderer.getTextureId(),
             ImVec2(drawW, drawH),
-            ImVec2(0, 1), ImVec2(1, 0) // flip vertical (OpenGL vs ImGui convention)
+            ImVec2(0, 1), ImVec2(1, 0)
         );
 
         // Touche P : bascule Trackball ↔ Vue Pièce
@@ -430,7 +470,33 @@ void Game::update()
 
         if (ImGui::IsItemHovered())
         {
-            const ImGuiIO& io = ImGui::GetIO();
+            const ImGuiIO& io  = ImGui::GetIO();
+            ImVec2 imgMin      = ImGui::GetItemRectMin();
+            float  relX        = io.MousePos.x - imgMin.x;
+            float  relY        = io.MousePos.y - imgMin.y;
+            bool   isDragging  = ImGui::IsMouseDragging(ImGuiMouseButton_Left)
+                              || ImGui::IsMouseDragging(ImGuiMouseButton_Right);
+
+            // Hover : mise à jour en continu (sans drag)
+            if (!isDragging)
+            {
+                auto [hr, hc] = m_renderer.pickSquare(relX, relY, drawW, drawH);
+                m_renderer.setHoverSquare(hr, hc);
+            }
+            else
+            {
+                m_renderer.setHoverSquare(-1, -1);
+            }
+
+            // Clic gauche sans drag → sélection / déplacement
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !m_renderer.isPieceView())
+            {
+                auto [cr, cc] = m_renderer.pickSquare(relX, relY, drawW, drawH);
+                if (cr >= 0)
+                    handle3DClick(cr, cc);
+            }
+
+            // Drag gauche → rotation caméra
             if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
             {
                 if (m_renderer.isPieceView())
@@ -438,6 +504,7 @@ void Game::update()
                 else
                     m_renderer.orbit(-io.MouseDelta.x * 0.005f, io.MouseDelta.y * 0.005f);
             }
+
             if (!m_renderer.isPieceView())
             {
                 if (io.MouseWheel != 0.0f)
@@ -445,6 +512,19 @@ void Game::update()
                 if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
                     m_renderer.pan(io.MouseDelta.x, io.MouseDelta.y);
             }
+        }
+        else
+        {
+            m_renderer.setHoverSquare(-1, -1);
+        }
+
+        // Synchroniser l'affichage de sélection avec l'état du plateau
+        {
+            auto [selR, selC] = m_board.getSelectedSquare();
+            std::vector<std::pair<int,int>> validMoves;
+            if (selR >= 0)
+                validMoves = m_board.getValidMoves(selR, selC);
+            m_renderer.setSelectionDisplay(selR, selC, std::move(validMoves));
         }
 
         // Indicateur de mode caméra
