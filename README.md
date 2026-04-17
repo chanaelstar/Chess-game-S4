@@ -15,7 +15,7 @@ Jeu d'échecs complet en **2D et 3D**, avec interface graphique *ImGui* et rendu
 - **Joueur vs Joueur** — deux joueurs sur le même écran
 - **Joueur vs IA** — affrontez une intelligence artificielle
 - **Mode Infernal** — mode aléatoire
-- <img width="371" height="325" alt="image" src="https://github.com/user-attachments/assets/b70e7b6d-c4eb-49db-863a-be0b950c4ff2" />
+<img width="371" height="325" alt="image" src="https://github.com/user-attachments/assets/b70e7b6d-c4eb-49db-863a-be0b950c4ff2" />
 
 
 ### 🕹️ Comment jouer ?
