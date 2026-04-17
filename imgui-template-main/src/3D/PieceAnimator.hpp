@@ -27,6 +27,10 @@ public:
     // Sinon retourne false (worldPos inchangé).
     bool getAnimatedPos(int row, int col, glm::vec3& worldPos) const;
 
+    // Retourne true et modifie rotY (radians, axe Y) si la pièce est en vol.
+    // La pièce est orientée dans la direction de déplacement.
+    bool getAnimatedRotY(int row, int col, float& rotY) const;
+
 private:
     // Position monde du dessus de la case (row, col)
     static glm::vec3 squareTop(int row, int col);

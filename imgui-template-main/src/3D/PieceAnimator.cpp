@@ -39,6 +39,23 @@ void PieceAnimator::update(float dt)
     }
 }
 
+bool PieceAnimator::getAnimatedRotY(int row, int col, float& rotY) const
+{
+    if (!m_active || row != m_toRow || col != m_toCol)
+        return false;
+
+    glm::vec3 src = squareTop(m_fromRow, m_fromCol);
+    glm::vec3 dst = squareTop(m_toRow,   m_toCol);
+    float dx = dst.x - src.x;
+    float dz = dst.z - src.z;
+
+    if (std::abs(dx) < 1e-4f && std::abs(dz) < 1e-4f)
+        return false; // déplacement nul (ne devrait pas arriver)
+
+    rotY = std::atan2(dx, dz); // oriente la pièce vers sa destination
+    return true;
+}
+
 bool PieceAnimator::getAnimatedPos(int row, int col, glm::vec3& worldPos) const
 {
     if (!m_active || row != m_toRow || col != m_toCol)
