@@ -1,16 +1,16 @@
 #pragma once
 #include <glad/glad.h>
-#include <glimac/Program.hpp>
-#include <glimac/Sphere.hpp>
 #include <glm/glm.hpp>
-#include <array>
-#include <optional>
+#include <utility>
+#include <vector>
 #include "3D/BoardHighlight.hpp"
+#include "3D/BoardRenderer.hpp"
 #include "3D/CameraController.hpp"
 #include "3D/LightingManager.hpp"
-#include "3D/ModelLoader.hpp"
 #include "3D/PieceAnimator.hpp"
+#include "3D/PieceRenderer.hpp"
 #include "3D/RayCaster.hpp"
+#include "3D/SkyboxRenderer.hpp"
 #include "Piece.hpp"
 
 class ChessBoard;
@@ -37,7 +37,7 @@ public:
     void enterTrackball()                     { m_camera.setMode(CameraMode::Trackball); }
     bool isPieceView() const                  { return m_camera.getMode() == CameraMode::PieceView; }
     // Éclairage / couleurs
-    void setChaosColors(glm::vec3 light, glm::vec3 dark);
+    void setChaosColors(glm::vec3 light, glm::vec3 dark) { m_colorLight = light; m_colorDark = dark; }
     void setCurrentPlayer(PieceColor p) { m_lighting.setCurrentPlayer(p); }
     // Animation (§3.7)
     void startPieceAnimation(int fromRow, int fromCol, int toRow, int toCol)
@@ -55,52 +55,22 @@ public:
     }
 
 private:
-    void buildBoardMesh();
-    void buildBorderMesh();
-    void buildPieceMesh();
-    void buildSkyboxMesh();
-    GLuint                         m_vao{};
-    GLuint                         m_vbo{};
-    GLuint                         m_borderVao{};
-    GLuint                         m_borderVbo{};
-    int                            m_borderVertexCount{};
-    GLuint                         m_pieceVao{};
-    GLuint                         m_pieceVbo{};
-    int                            m_pieceVertexCount{};
-    GLuint                         m_skyboxVao{};
-    GLuint                         m_skyboxVbo{};
-    std::optional<glimac::Program> m_skyboxProgram;
-    GLint                          m_skyboxUniVP{};
-    std::optional<glimac::Program> m_program;
-    // Shader + modèles 3D des pièces
-    std::optional<glimac::Program> m_pieceProgram;
-    GLint                          m_pieceUniMVP{};
-    GLint                          m_pieceUniModel{};
-    GLint                          m_pieceUniColor{};
-    GLint                          m_pieceUniTime{};
-    GLint                          m_pieceUniPlayerMode{};
-    std::array<LoadedMesh, 7>      m_pieceModels; // indexé par PieceType (0=None…6=King)
-    GLuint                         m_texLight{};  // texture bois claire
-    GLint                          m_uniMVP{};
-    GLint                          m_uniColor{};
-    GLint                          m_uniTexture{};
-    GLint                          m_uniUseTexture{};
-    GLint                          m_uniLightMode{};
-    GLuint                         m_fbo{};
-    GLuint                         m_fboTexture{};
-    GLuint                         m_fboDepth{};
-    CameraController               m_camera{};
-    LightingManager                m_lighting{};
-    PieceAnimator                  m_animator{};
-    glm::mat4                      m_projMatrix{};
-    // Couleurs des cases (modifiables en mode chaos)
+    // FBO
+    GLuint    m_fbo{}, m_fboTexture{}, m_fboDepth{};
+    glm::mat4 m_projMatrix{};
+    // Sous-systèmes
+    CameraController m_camera{};
+    LightingManager  m_lighting{};
+    PieceAnimator    m_animator{};
+    BoardHighlight   m_highlight{};
+    SkyboxRenderer   m_skybox{};
+    BoardRenderer    m_boardRenderer{};
+    PieceRenderer    m_pieceRenderer{};
+    // Couleurs des cases
     glm::vec3 m_colorLight{1.f, 0.871f, 0.455f};
     glm::vec3 m_colorDark {0.804f, 0.510f, 0.247f};
-    // Surbrillance des cases (§3.6)
-    BoardHighlight                  m_highlight{};
-    int                             m_hoverRow{-1};
-    int                             m_hoverCol{-1};
-    int                             m_selRow{-1};
-    int                             m_selCol{-1};
+    // État hover / sélection (§3.6)
+    int                             m_hoverRow{-1}, m_hoverCol{-1};
+    int                             m_selRow{-1},   m_selCol{-1};
     std::vector<std::pair<int,int>> m_validMoves;
 };
