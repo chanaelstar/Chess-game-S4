@@ -4,12 +4,11 @@
 #include "Piece.hpp"
 
 // Gère les deux modes d'éclairage (tour des blancs / tour des noirs)
-// et le passage des uniforms correspondants aux shaders.
 class LightingManager {
 public:
     LightingManager() = default;
 
-    void start();  // à appeler dans Renderer3D::init()
+    void start();
 
     void setCurrentPlayer(PieceColor p) { m_currentPlayer = p; }
 
@@ -20,9 +19,9 @@ public:
     void applyToBoardShader(GLint uniLightMode) const;
 
 private:
-    float      elapsed() const;
-    int        playerMode() const;
+    float elapsed() const;
+    int   playerMode() const;
 
-    PieceColor m_currentPlayer{PieceColor::White};
+    PieceColor                            m_currentPlayer{PieceColor::White};
     std::chrono::steady_clock::time_point m_startTime{};
 };

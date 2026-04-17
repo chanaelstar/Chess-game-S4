@@ -1,8 +1,8 @@
 #pragma once
 #include <glad/glad.h>
+#include <array>
 #include <glimac/Program.hpp>
 #include <glm/glm.hpp>
-#include <array>
 #include <optional>
 #include "3D/LightingManager.hpp"
 #include "3D/ModelLoader.hpp"
@@ -14,11 +14,11 @@ class ChessBoard;
 class PieceRenderer {
 public:
     void init();
-    void draw(const ChessBoard& board, const glm::mat4& mvp,
-              const LightingManager& lighting, const PieceAnimator& animator);
+    void draw(const ChessBoard& board, const glm::mat4& mvp, const LightingManager& lighting, const PieceAnimator& animator);
+
 private:
-    static float targetHeight(PieceType type);
-    std::array<LoadedMesh, 7> m_models; // indexé par PieceType (0=None…6=King)
+    static float                   targetHeight(PieceType type);
+    std::array<LoadedMesh, 7>      m_models;
     std::optional<glimac::Program> m_program;
-    GLint m_uniMVP{}, m_uniModel{}, m_uniColor{}, m_uniTime{}, m_uniPlayerMode{};
+    GLint                          m_uniMVP{}, m_uniModel{}, m_uniColor{}, m_uniTime{}, m_uniPlayerMode{};
 };

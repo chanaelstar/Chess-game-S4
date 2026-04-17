@@ -1,8 +1,8 @@
 #include "3D/BoardRenderer.hpp"
-#include <vector>
 #include <glimac/FilePath.hpp>
 #include <glimac/Image.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <vector>
 
 static void addBox(std::vector<float>& verts, float x, float z, float w, float d, float h)
 {
@@ -14,26 +14,26 @@ static void addBox(std::vector<float>& verts, float x, float z, float w, float d
                        float bx, float by, float bz,
                        float cx, float cy, float cz,
                        float dx, float dy, float dz) {
-        verts.insert(verts.end(), {ax,ay,az, bx,by,bz, cx,cy,cz, ax,ay,az, cx,cy,cz, dx,dy,dz});
+        verts.insert(verts.end(), {ax, ay, az, bx, by, bz, cx, cy, cz, ax, ay, az, cx, cy, cz, dx, dy, dz});
     };
 
-    addFace(x1,y2,z1, x2,y2,z1, x2,y2,z2, x1,y2,z2); // dessus
-    addFace(x1,y1,z1, x2,y1,z1, x2,y2,z1, x1,y2,z1); // avant
-    addFace(x1,y1,z2, x1,y2,z2, x2,y2,z2, x2,y1,z2); // arrière
-    addFace(x1,y1,z1, x1,y2,z1, x1,y2,z2, x1,y1,z2); // gauche
-    addFace(x2,y1,z1, x2,y1,z2, x2,y2,z2, x2,y2,z1); // droite
-    addFace(x1,y1,z1, x1,y1,z2, x2,y1,z2, x2,y1,z1); // dessous
+    addFace(x1, y2, z1, x2, y2, z1, x2, y2, z2, x1, y2, z2); // dessus
+    addFace(x1, y1, z1, x2, y1, z1, x2, y2, z1, x1, y2, z1); // avant
+    addFace(x1, y1, z2, x1, y2, z2, x2, y2, z2, x2, y1, z2); // arrière
+    addFace(x1, y1, z1, x1, y2, z1, x1, y2, z2, x1, y1, z2); // gauche
+    addFace(x2, y1, z1, x2, y1, z2, x2, y2, z2, x2, y2, z1); // droite
+    addFace(x1, y1, z1, x1, y1, z2, x2, y1, z2, x2, y1, z1); // dessous
 }
 
 void BoardRenderer::buildBorderMesh()
 {
     std::vector<float> verts;
-    const float h = 0.45f, t = 0.3f;
+    const float        h = 0.45f, t = 0.3f;
 
-    addBox(verts, -4.f-t, -4.f-t, 8.f+2.f*t, t, h); // avant
-    addBox(verts, -4.f-t,  4.f,   8.f+2.f*t, t, h); // arrière
-    addBox(verts, -4.f-t, -4.f,   t, 8.f, h);        // gauche
-    addBox(verts,  4.f,   -4.f,   t, 8.f, h);         // droite
+    addBox(verts, -4.f - t, -4.f - t, 8.f + 2.f * t, t, h); // avant
+    addBox(verts, -4.f - t, 4.f, 8.f + 2.f * t, t, h);      // arrière
+    addBox(verts, -4.f - t, -4.f, t, 8.f, h);               // gauche
+    addBox(verts, 4.f, -4.f, t, 8.f, h);                    // droite
 
     m_borderVertexCount = (int)(verts.size() / 3);
 
@@ -50,32 +50,31 @@ void BoardRenderer::buildBorderMesh()
 
 void BoardRenderer::buildBoardMesh()
 {
-    // Chaque vertex : x, y, z, u, v (5 floats)
     std::vector<float> vertices;
 
     auto quad = [&](
-        float ax,float ay,float az,float au,float av,
-        float bx,float by,float bz,float bu,float bv,
-        float cx,float cy,float cz,float cu,float cv,
-        float dx,float dy,float dz,float du,float dv)
-    {
-        vertices.insert(vertices.end(), {ax,ay,az,au,av, bx,by,bz,bu,bv, cx,cy,cz,cu,cv});
-        vertices.insert(vertices.end(), {ax,ay,az,au,av, cx,cy,cz,cu,cv, dx,dy,dz,du,dv});
+                    float ax, float ay, float az, float au, float av,
+                    float bx, float by, float bz, float bu, float bv,
+                    float cx, float cy, float cz, float cu, float cv,
+                    float dx, float dy, float dz, float du, float dv
+                ) {
+        vertices.insert(vertices.end(), {ax, ay, az, au, av, bx, by, bz, bu, bv, cx, cy, cz, cu, cv});
+        vertices.insert(vertices.end(), {ax, ay, az, au, av, cx, cy, cz, cu, cv, dx, dy, dz, du, dv});
     };
 
     for (int row = 0; row < 8; ++row)
         for (int col = 0; col < 8; ++col)
         {
-            float x1=col-4.f, x2=x1+1.f;
-            float z1=row-4.f, z2=z1+1.f;
-            float y1=0.f,     y2=0.45f;
+            float x1 = col - 4.f, x2 = x1 + 1.f;
+            float z1 = row - 4.f, z2 = z1 + 1.f;
+            float y1 = 0.f, y2 = 0.45f;
 
-            quad(x1,y2,z1,0,0, x2,y2,z1,1,0, x2,y2,z2,1,1, x1,y2,z2,0,1); // dessus
-            quad(x1,y1,z1,0,0, x2,y1,z1,1,0, x2,y2,z1,1,1, x1,y2,z1,0,1); // avant
-            quad(x2,y1,z2,0,0, x1,y1,z2,1,0, x1,y2,z2,1,1, x2,y2,z2,0,1); // arrière
-            quad(x1,y1,z2,0,0, x1,y1,z1,1,0, x1,y2,z1,1,1, x1,y2,z2,0,1); // gauche
-            quad(x2,y1,z1,0,0, x2,y1,z2,1,0, x2,y2,z2,1,1, x2,y2,z1,0,1); // droite
-            quad(x1,y1,z2,0,0, x2,y1,z2,1,0, x2,y1,z1,1,1, x1,y1,z1,0,1); // dessous
+            quad(x1, y2, z1, 0, 0, x2, y2, z1, 1, 0, x2, y2, z2, 1, 1, x1, y2, z2, 0, 1); // dessus
+            quad(x1, y1, z1, 0, 0, x2, y1, z1, 1, 0, x2, y2, z1, 1, 1, x1, y2, z1, 0, 1); // avant
+            quad(x2, y1, z2, 0, 0, x1, y1, z2, 1, 0, x1, y2, z2, 1, 1, x2, y2, z2, 0, 1); // arrière
+            quad(x1, y1, z2, 0, 0, x1, y1, z1, 1, 0, x1, y2, z1, 1, 1, x1, y2, z2, 0, 1); // gauche
+            quad(x2, y1, z1, 0, 0, x2, y1, z2, 1, 0, x2, y2, z2, 1, 1, x2, y2, z1, 0, 1); // droite
+            quad(x1, y1, z2, 0, 0, x2, y1, z2, 1, 0, x2, y1, z1, 1, 1, x1, y1, z1, 0, 1); // dessous
         }
 
     glGenVertexArrays(1, &m_vao);
@@ -107,16 +106,12 @@ void BoardRenderer::init()
     m_uniUseTexture = glGetUniformLocation(m_program->getGLId(), "uUseTexture");
     m_uniLightMode  = glGetUniformLocation(m_program->getGLId(), "uLightMode");
 
-    auto img = glimac::loadImage(glimac::FilePath(
-        std::string(CMAKE_SOURCE_DIR) + "/assets/textures/oak-wood-texture.jpg"));
+    auto img = glimac::loadImage(glimac::FilePath(std::string(CMAKE_SOURCE_DIR) + "/assets/textures/oak-wood-texture.jpg"));
     if (img)
     {
         glGenTextures(1, &m_texLight);
         glBindTexture(GL_TEXTURE_2D, m_texLight);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F,
-                     static_cast<GLsizei>(img->getWidth()),
-                     static_cast<GLsizei>(img->getHeight()),
-                     0, GL_RGBA, GL_FLOAT, img->getPixels());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, static_cast<GLsizei>(img->getWidth()), static_cast<GLsizei>(img->getHeight()), 0, GL_RGBA, GL_FLOAT, img->getPixels());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -126,8 +121,7 @@ void BoardRenderer::init()
     }
 }
 
-void BoardRenderer::draw(const glm::mat4& mvp, glm::vec3 colorLight, glm::vec3 colorDark,
-                         const LightingManager& lighting)
+void BoardRenderer::draw(const glm::mat4& mvp, glm::vec3 colorLight, glm::vec3 colorDark, const LightingManager& lighting)
 {
     m_program->use();
     glUniformMatrix4fv(m_uniMVP, 1, GL_FALSE, glm::value_ptr(mvp));

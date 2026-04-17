@@ -3,11 +3,12 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "ChessBoard.hpp"
 
-std::pair<int,int> Renderer3D::pickSquare(float mx, float my, float imgW, float imgH) const
+std::pair<int, int> Renderer3D::pickSquare(float mx, float my, float imgW, float imgH) const
 {
     return RayCaster::pickBoardSquare(
         {mx, my}, {imgW, imgH},
-        m_projMatrix, m_camera.getViewMatrix());
+        m_projMatrix, m_camera.getViewMatrix()
+    );
 }
 
 void Renderer3D::init()
@@ -19,8 +20,7 @@ void Renderer3D::init()
     m_lighting.start();
 
     glEnable(GL_DEPTH_TEST);
-    m_projMatrix = glm::perspective(glm::radians(45.f),
-                                    (float)FBO_WIDTH / FBO_HEIGHT, 0.1f, 100.f);
+    m_projMatrix = glm::perspective(glm::radians(45.f), (float)FBO_WIDTH / FBO_HEIGHT, 0.1f, 100.f);
 
     // FBO
     glGenTextures(1, &m_fboTexture);
@@ -49,7 +49,7 @@ void Renderer3D::draw(const ChessBoard& board, float dt)
     glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Vue Pièce : la caméra suit la pièce pendant son animation (bonus §5)
+    // Vue Pièce : la caméra suit la pièce pendant son animation
     if (m_camera.getMode() == CameraMode::PieceView && m_pvRow >= 0)
     {
         glm::vec3 base(m_pvCol - 4.f + 0.5f, 0.45f, m_pvRow - 4.f + 0.5f);

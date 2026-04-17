@@ -15,15 +15,13 @@ int main(int argc, char* argv[])
              io.Fonts->Build();
              chessFont = io.Fonts->Fonts[1];
 
-             game.init(); // ← toute l'init OpenGL va là
+             game.init(); // init OpenGL
          },
          .loop                 = [&]() {
-                game.update(); // ← ImGui + rendu 3D
+                game.update(); // ImGui + rendu 3D
                 if (game.shouldQuit())
                     glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE); },
-         .window_size_callback = [&](int width, int height) {
-             game.onWindowResize(width, height); // ← resize
-         }}
+         .window_size_callback = [&](int width, int height) { game.onWindowResize(width, height); }}
     );
     return 0;
 }

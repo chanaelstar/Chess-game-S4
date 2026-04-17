@@ -1,20 +1,20 @@
 #include "3D/ModelLoader.hpp"
 #include <cstdio>
 #include <fstream>
+#include <glm/glm.hpp>
 #include <limits>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <glm/glm.hpp>
 
-// Triangulation en éventail : polygone [v0,v1,...,vn] → triangles [v0,v1,v2],[v0,v2,v3],...
 static void fanTriangulate(
     const std::vector<std::pair<int, int>>& poly, // (posIdx, normIdx) 0-based
     const std::vector<glm::vec3>&           positions,
     const std::vector<glm::vec3>&           normals,
     std::vector<float>&                     out,
     glm::vec3&                              bboxMin,
-    glm::vec3&                              bboxMax)
+    glm::vec3&                              bboxMax
+)
 {
     for (int i = 1; i + 1 < static_cast<int>(poly.size()); ++i)
     {
@@ -85,15 +85,12 @@ LoadedMesh loadOBJObject(const std::string& filepath, const std::string& objectN
                 int pi = 0, ti = 0, ni = -1;
                 if (std::sscanf(vtx.c_str(), "%d/%d/%d", &pi, &ti, &ni) == 3)
                 {
-                    // v/vt/vn
                 }
                 else if (std::sscanf(vtx.c_str(), "%d//%d", &pi, &ni) == 2)
                 {
-                    // v//vn
                 }
                 else if (std::sscanf(vtx.c_str(), "%d/%d", &pi, &ti) == 2)
                 {
-                    // v/vt
                     ni = -1;
                 }
                 else
@@ -123,9 +120,9 @@ LoadedMesh loadOBJObject(const std::string& filepath, const std::string& objectN
         GL_ARRAY_BUFFER,
         static_cast<GLsizeiptr>(verts.size() * sizeof(float)),
         verts.data(),
-        GL_STATIC_DRAW);
+        GL_STATIC_DRAW
+    );
 
-    // Position : location 0 (3 floats)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     // Normale : location 1 (3 floats)

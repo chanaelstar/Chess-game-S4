@@ -1,9 +1,10 @@
 #include "Game.hpp"
 #include <imgui.h>
+#include <glm/glm.hpp>
 #include <utility>
 #include <vector>
-#include <glm/glm.hpp>
 #include "3D/Renderer.hpp"
+
 
 Game::Game()
     : m_currentPlayer(PieceColor::White) {}
@@ -157,11 +158,11 @@ void Game::perturbColors()
     };
 
     m_currentLight = {perturb(m_currentLight.r), perturb(m_currentLight.g), perturb(m_currentLight.b)};
-    m_currentDark  = {perturb(m_currentDark.r),  perturb(m_currentDark.g),  perturb(m_currentDark.b)};
+    m_currentDark  = {perturb(m_currentDark.r), perturb(m_currentDark.g), perturb(m_currentDark.b)};
 
     m_board.setChaosColors(
         {m_currentLight.r, m_currentLight.g, m_currentLight.b, 1.f},
-        {m_currentDark.r,  m_currentDark.g,  m_currentDark.b,  1.f}
+        {m_currentDark.r, m_currentDark.g, m_currentDark.b, 1.f}
     );
     m_renderer.setChaosColors(m_currentLight, m_currentDark);
 }
@@ -192,13 +193,10 @@ void Game::handlePostMove()
     {
         if (m_interface.getGameMode() == GameMode::OnePlayer)
         {
-            // Différer : le joueur courant (humain) garde son éclairage pendant l'animation.
-            // Le switch + coup IA s'exécuteront après animation+délai.
             m_pendingAIMove = AIPlayer::getMove(m_board, PieceColor::Black);
         }
         else
         {
-            // Mode 2 joueurs : switch après animation+délai (éclairage cohérent)
             m_switchAfterAnim = true;
         }
     }
@@ -210,13 +208,11 @@ void Game::handle3DClick(int row, int col)
 
     if (selRow >= 0)
     {
-        // Vérifier si (row, col) est un coup valide
         auto validMoves = m_board.getValidMoves(selRow, selCol);
         for (auto [r, c] : validMoves)
         {
             if (r == row && c == col)
             {
-                // Exécuter le coup
                 TurnSnapshot preMove{m_board.takeSnapshot(), m_currentPlayer, m_moveHistory};
                 m_undoStack.push_back(preMove);
                 m_board.movePiece(selRow, selCol, row, col);
@@ -234,7 +230,6 @@ void Game::handle3DClick(int row, int col)
         }
     }
 
-    // Sélectionner la pièce du joueur courant
     const Piece* p = m_board.getPiece(row, col);
     if (p && p->getColor() == m_currentPlayer)
         m_board.setSelectedSquare(row, col);
@@ -314,10 +309,10 @@ void Game::update()
         m_interface.drawMenu();
         return;
     }
-    // Calcul du deltaTime (en secondes) entre deux frames
     auto  now = std::chrono::steady_clock::now();
     float dt  = std::chrono::duration<float>(now - m_lastFrameTime).count();
-    if (dt > 0.5f) dt = 0.5f; // clamp au démarrage (premier frame)
+    if (dt > 0.5f)
+        dt = 0.5f; // clamp au démarrage (premier frame)
     m_lastFrameTime = now;
 
     // Mode Infernal : setup binomial au premier frame (pions absents)
@@ -352,14 +347,12 @@ void Game::update()
     if (ImGui::IsKeyPressed(ImGuiKey_Escape))
         m_paused = !m_paused;
 
-    // Switch joueur différé (mode 2J) : après animation+délai
     if (m_switchAfterAnim && m_renderer.isReadyForNext())
     {
         m_switchAfterAnim = false;
         switchPlayer();
     }
 
-    // Coup IA différé (mode 1J) : après animation humaine + délai
     if (m_pendingAIMove && m_renderer.isReadyForNext())
     {
         switchPlayer(); // humain → IA (éclairage bascule maintenant)
@@ -386,7 +379,6 @@ void Game::update()
 
     if (m_paused)
     {
-        // Afficher le plateau 2D (non interactif) pour qu'il reste visible
         ImGui::BeginDisabled();
         m_board.drawBoard(m_currentPlayer);
         ImGui::EndDisabled();
@@ -400,7 +392,11 @@ void Game::update()
             float  aspect = (float)Renderer3D::FBO_WIDTH / Renderer3D::FBO_HEIGHT;
             float  drawW  = avail.x;
             float  drawH  = drawW / aspect;
-            if (drawH > avail.y) { drawH = avail.y; drawW = drawH * aspect; }
+            if (drawH > avail.y)
+            {
+                drawH = avail.y;
+                drawW = drawH * aspect;
+            }
             float offX = (avail.x - drawW) * 0.5f;
             float offY = (avail.y - drawH) * 0.5f;
             ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + offX, ImGui::GetCursorPosY() + offY));
@@ -408,10 +404,9 @@ void Game::update()
         }
         ImGui::End();
 
-        // Synchroniser sélection même en pause
         {
             auto [selR, selC] = m_board.getSelectedSquare();
-            std::vector<std::pair<int,int>> validMoves;
+            std::vector<std::pair<int, int>> validMoves;
             if (selR >= 0)
                 validMoves = m_board.getValidMoves(selR, selC);
             m_renderer.setSelectionDisplay(selR, selC, std::move(validMoves));
@@ -422,9 +417,8 @@ void Game::update()
         return;
     }
 
-    // Sauvegarder l'état AVANT le coup (drawBoard applique le coup en interne)
     TurnSnapshot preMove{m_board.takeSnapshot(), m_currentPlayer, m_moveHistory};
-    // Bloquer les coups pendant l'animation / le délai post-animation
+    // Bloquer les coups pendant l'animation
     if (!m_renderer.isReadyForNext())
     {
         ImGui::BeginDisabled();
@@ -487,16 +481,18 @@ void Game::update()
                 auto [selRow, selCol] = m_board.getSelectedSquare();
                 if (selRow != -1)
                 {
-                    const Piece* p = m_board.getPiece(selRow, selCol);
-                    float pieceH = 0.45f;
-                    if (p) {
-                        switch (p->getType()) {
-                        case PieceType::Pawn:   pieceH += 0.40f; break;
-                        case PieceType::Rook:   pieceH += 0.50f; break;
+                    const Piece* p      = m_board.getPiece(selRow, selCol);
+                    float        pieceH = 0.45f;
+                    if (p)
+                    {
+                        switch (p->getType())
+                        {
+                        case PieceType::Pawn: pieceH += 0.40f; break;
+                        case PieceType::Rook: pieceH += 0.50f; break;
                         case PieceType::Knight: pieceH += 0.55f; break;
                         case PieceType::Bishop: pieceH += 0.65f; break;
-                        case PieceType::Queen:  pieceH += 0.80f; break;
-                        case PieceType::King:   pieceH += 0.90f; break;
+                        case PieceType::Queen: pieceH += 0.80f; break;
+                        case PieceType::King: pieceH += 0.90f; break;
                         default: break;
                         }
                     }
@@ -509,14 +505,13 @@ void Game::update()
 
         if (ImGui::IsItemHovered())
         {
-            const ImGuiIO& io  = ImGui::GetIO();
-            ImVec2 imgMin      = ImGui::GetItemRectMin();
-            float  relX        = io.MousePos.x - imgMin.x;
-            float  relY        = io.MousePos.y - imgMin.y;
-            bool   isDragging  = ImGui::IsMouseDragging(ImGuiMouseButton_Left)
+            const ImGuiIO& io         = ImGui::GetIO();
+            ImVec2         imgMin     = ImGui::GetItemRectMin();
+            float          relX       = io.MousePos.x - imgMin.x;
+            float          relY       = io.MousePos.y - imgMin.y;
+            bool           isDragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left)
                               || ImGui::IsMouseDragging(ImGuiMouseButton_Right);
 
-            // Hover : mise à jour en continu (sans drag)
             if (!isDragging)
             {
                 auto [hr, hc] = m_renderer.pickSquare(relX, relY, drawW, drawH);
@@ -527,7 +522,7 @@ void Game::update()
                 m_renderer.setHoverSquare(-1, -1);
             }
 
-            // Clic gauche sans drag → sélection / déplacement (bloqué pendant animation)
+            // Clic gauche sans drag → sélection / déplacement
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && m_renderer.isReadyForNext())
             {
                 auto [cr, cc] = m_renderer.pickSquare(relX, relY, drawW, drawH);
@@ -560,7 +555,7 @@ void Game::update()
         // Synchroniser l'affichage de sélection avec l'état du plateau
         {
             auto [selR, selC] = m_board.getSelectedSquare();
-            std::vector<std::pair<int,int>> validMoves;
+            std::vector<std::pair<int, int>> validMoves;
             if (selR >= 0)
                 validMoves = m_board.getValidMoves(selR, selC);
             m_renderer.setSelectionDisplay(selR, selC, std::move(validMoves));

@@ -1,12 +1,11 @@
 #pragma once
+#include <chrono>
+#include <optional>
 #include <string>
 #include <vector>
 #include "3D/Renderer.hpp"
 #include "AI/AIPlayer.hpp"
-#include <optional>
 #include "ChessBoard.hpp"
-#include <chrono>
-#include <vector>
 #include "Maths/BetaDistribution.hpp"
 #include "Maths/BinomialDistribution.hpp"
 #include "Maths/CauchyDistribution.hpp"
@@ -18,7 +17,6 @@
 #include "Piece.hpp"
 #include "UI/GameHUD.hpp"
 #include "UI/Interface.hpp"
-
 
 class Game {
 public:
@@ -53,24 +51,24 @@ private:
     void applyChaosEvent(std::string& logEntry);
     void applyBinomialPawnSetup();
     void perturbColors();
-    void handlePostMove();           // logique commune après tout coup (2D ou 3D)
+    void handlePostMove();
     void handle3DClick(int row, int col); // sélection / déplacement depuis la vue 3D
 
-    UniformDiscrete       m_uniform;
-    GeometricDistribution m_geom;
-    PoissonDistribution   m_poisson;
-    BinomialDistribution  m_binomial;
-    ExponentialDistribution m_expDist;
-    NormalDistribution      m_normal;
-    BetaDistribution        m_beta;
-    CauchyDistribution      m_cauchy;
-    std::optional<Move>   m_pendingAIMove;   // coup IA différé (attend fin d'animation+délai)
-    bool                  m_switchAfterAnim{false}; // switch joueur après animation+délai (2J ou post-IA)
-    int                   m_chaosCountdown{1};
-    bool                  m_chaosInitialized{false};
-    float                 m_spontaneousTimer{0.f};
+    UniformDiscrete                       m_uniform;
+    GeometricDistribution                 m_geom;
+    PoissonDistribution                   m_poisson;
+    BinomialDistribution                  m_binomial;
+    ExponentialDistribution               m_expDist;
+    NormalDistribution                    m_normal;
+    BetaDistribution                      m_beta;
+    CauchyDistribution                    m_cauchy;
+    std::optional<Move>                   m_pendingAIMove;
+    bool                                  m_switchAfterAnim{false};
+    int                                   m_chaosCountdown{1};
+    bool                                  m_chaosInitialized{false};
+    float                                 m_spontaneousTimer{0.f};
     std::chrono::steady_clock::time_point m_lastFrameTime{};
     // Couleurs courantes du plateau — dérivent via N(0, 0.05²) à chaque événement
-    glm::vec3             m_currentLight{1.f, 0.871f, 0.455f};
-    glm::vec3             m_currentDark {0.804f, 0.510f, 0.247f};
+    glm::vec3 m_currentLight{1.f, 0.871f, 0.455f};
+    glm::vec3 m_currentDark{0.804f, 0.510f, 0.247f};
 };

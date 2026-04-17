@@ -1,22 +1,23 @@
 #include "3D/PieceAnimator.hpp"
-#include <glm/gtx/compatibility.hpp> // glm::lerp / glm::mix
 #include <algorithm>
 #include <cmath>
+#include <glm/gtx/compatibility.hpp> // glm::lerp / glm::mix
 
 glm::vec3 PieceAnimator::squareTop(int row, int col)
 {
     return glm::vec3(col - 4.f + 0.5f, 0.45f, row - 4.f + 0.5f);
 }
 
-void PieceAnimator::startMove(int fromRow, int fromCol, int toRow, int toCol,
-                              float duration, float postDelay)
+void PieceAnimator::startMove(int fromRow, int fromCol, int toRow, int toCol, float duration, float postDelay)
 {
-    m_fromRow  = fromRow; m_fromCol = fromCol;
-    m_toRow    = toRow;   m_toCol   = toCol;
-    m_t        = 0.f;
-    m_duration = (duration > 0.f) ? duration : 0.45f;
+    m_fromRow   = fromRow;
+    m_fromCol   = fromCol;
+    m_toRow     = toRow;
+    m_toCol     = toCol;
+    m_t         = 0.f;
+    m_duration  = (duration > 0.f) ? duration : 0.45f;
     m_postDelay = (postDelay > 0.f) ? postDelay : 0.f;
-    m_active   = true;
+    m_active    = true;
 }
 
 void PieceAnimator::update(float dt)
@@ -28,7 +29,6 @@ void PieceAnimator::update(float dt)
         {
             m_t      = 1.f;
             m_active = false;
-            // le postDelay commence à décompter ici
         }
     }
     else if (m_postDelay > 0.f)
@@ -45,14 +45,14 @@ bool PieceAnimator::getAnimatedRotY(int row, int col, float& rotY) const
         return false;
 
     glm::vec3 src = squareTop(m_fromRow, m_fromCol);
-    glm::vec3 dst = squareTop(m_toRow,   m_toCol);
-    float dx = dst.x - src.x;
-    float dz = dst.z - src.z;
+    glm::vec3 dst = squareTop(m_toRow, m_toCol);
+    float     dx  = dst.x - src.x;
+    float     dz  = dst.z - src.z;
 
     if (std::abs(dx) < 1e-4f && std::abs(dz) < 1e-4f)
-        return false; // déplacement nul (ne devrait pas arriver)
+        return false;
 
-    rotY = std::atan2(dx, dz); // oriente la pièce vers sa destination
+    rotY = std::atan2(dx, dz);
     return true;
 }
 
@@ -62,20 +62,15 @@ bool PieceAnimator::getAnimatedPos(int row, int col, glm::vec3& worldPos) const
         return false;
 
     glm::vec3 src = squareTop(m_fromRow, m_fromCol);
-    glm::vec3 dst = squareTop(m_toRow,   m_toCol);
+    glm::vec3 dst = squareTop(m_toRow, m_toCol);
 
-    // Easing smoothstep pour un démarrage et une arrivée fluides
     float t = m_t * m_t * (3.f - 2.f * m_t);
 
-    // Position interpolée (XZ + hauteur de base)
     worldPos = glm::mix(src, dst, t);
 
-    // Arc parabolique : hauteur proportionnelle à la distance parcourue
-    float dist = std::sqrt((dst.x - src.x) * (dst.x - src.x)
-                         + (dst.z - src.z) * (dst.z - src.z));
+    float dist = std::sqrt((dst.x - src.x) * (dst.x - src.x) + (dst.z - src.z) * (dst.z - src.z));
     float arcH = std::max(0.25f, std::min(dist * 0.20f, 1.6f));
 
-    // t brut pour la parabole (symétrie parfaite même avec easing sur XZ)
     worldPos.y += arcH * 4.f * m_t * (1.f - m_t);
 
     return true;

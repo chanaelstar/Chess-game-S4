@@ -1,6 +1,6 @@
 #pragma once
 #include <imgui.h>
-#include <cstdint> // Pour les types uint8_t
+#include <cstdint>
 
 enum class GameMode : std::uint8_t {
     None,
@@ -24,7 +24,7 @@ private:
 public:
     Interface() = default;
 
-    // Affiche le menu principal, retourne le mode choisi (None si aucun choix)
+    // Affiche le menu principal, retourne le mode choisi
     GameMode drawMenu();
 
     AppState getAppState() const { return m_appState; }

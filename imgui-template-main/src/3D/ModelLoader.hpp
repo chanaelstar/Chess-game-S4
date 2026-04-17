@@ -12,5 +12,4 @@ struct LoadedMesh {
     bool      valid{false};
 };
 
-// Charge un objet nommé depuis un fichier OBJ multi-objets
 LoadedMesh loadOBJObject(const std::string& filepath, const std::string& objectName);

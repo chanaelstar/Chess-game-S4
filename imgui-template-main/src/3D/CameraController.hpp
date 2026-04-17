@@ -1,7 +1,8 @@
 #pragma once
 #include <glm/glm.hpp>
 
-enum class CameraMode { Trackball, PieceView };
+enum class CameraMode { Trackball,
+                        PieceView };
 
 // Gère deux modes de caméra :
 //  - Trackball : orbite autour du centre de l'échiquier, jamais sous le plateau
@@ -10,21 +11,21 @@ class CameraController {
 public:
     CameraController();
 
-    // --- Trackball ---
+    // Trackball
     void orbit(float dTheta, float dPhi);
     void zoom(float delta);
     void pan(float dx, float dy);
     void setDistance(float d);
 
-    // --- PieceView ---
+    // PieceView
     void lookAround(float dTheta, float dPhi);
     void setPiecePosition(glm::vec3 worldTop);
 
-    // --- Mode ---
+    // Mode
     void       setMode(CameraMode mode);
     CameraMode getMode() const { return m_mode; }
 
-    glm::mat4  getViewMatrix() const { return m_viewMatrix; }
+    glm::mat4 getViewMatrix() const { return m_viewMatrix; }
 
 private:
     void recomputeViewMatrix();
