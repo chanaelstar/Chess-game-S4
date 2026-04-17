@@ -8,13 +8,15 @@ Projet réalisé dans le cadre de la formation **IMAC**.
 
 ## 📝 Présentation
 
-Jeu d'échecs complet en **2D et 3D**, avec interface graphique *ImGui* et rendu *OpenGL*.![alt text](image-1.png)
+Jeu d'échecs complet en **2D et 3D**, avec interface graphique *ImGui* et rendu *OpenGL*.<img width="2394" height="1401" alt="image" src="https://github.com/user-attachments/assets/1ccd8aff-d519-43cb-820a-dc71dce14f46" />
+
 
 ### 🎮 Modes de jeu
-![alt text](image.png)
 - **Joueur vs Joueur** — deux joueurs sur le même écran
 - **Joueur vs IA** — affrontez une intelligence artificielle
 - **Mode Infernal** — mode aléatoire
+- <img width="371" height="325" alt="image" src="https://github.com/user-attachments/assets/b70e7b6d-c4eb-49db-863a-be0b950c4ff2" />
+
 
 ### 🕹️ Comment jouer ?
 
