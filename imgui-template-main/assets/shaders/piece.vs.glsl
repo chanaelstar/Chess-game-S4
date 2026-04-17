@@ -7,9 +7,11 @@ uniform mat4 uMVPMatrix;
 uniform mat4 uModelMatrix;
 
 out vec3 vNormal;
+out vec3 vFragPos;
 
 void main()
 {
     gl_Position = uMVPMatrix * vec4(aPosition, 1.0);
-    vNormal = mat3(transpose(inverse(uModelMatrix))) * aNormal;
+    vNormal   = mat3(transpose(inverse(uModelMatrix))) * aNormal;
+    vFragPos  = vec3(uModelMatrix * vec4(aPosition, 1.0));
 }

@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <array>
 #include <optional>
+#include "3D/LightingManager.hpp"
 #include "3D/ModelLoader.hpp"
 #include "Piece.hpp"
 
@@ -26,6 +27,7 @@ public:
     void pan(float dx, float dy);
     void setDistance(float d);
     void setChaosColors(glm::vec3 light, glm::vec3 dark);
+    void setCurrentPlayer(PieceColor p) { m_lighting.setCurrentPlayer(p); }
 
 private:
     void                           buildBoardMesh();
@@ -51,14 +53,19 @@ private:
     GLint                          m_pieceUniMVP{};
     GLint                          m_pieceUniModel{};
     GLint                          m_pieceUniColor{};
+    GLint                          m_pieceUniTime{};
+    GLint                          m_pieceUniPlayerMode{};
     std::array<LoadedMesh, 7>      m_pieceModels; // indexé par PieceType (0=None…6=King)
+    GLuint                         m_texLight{};  // texture bois claire
     GLint                          m_uniMVP{};
     GLint                          m_uniColor{};
     GLint                          m_uniTexture{};
     GLint                          m_uniUseTexture{};
+    GLint                          m_uniLightMode{};
     GLuint                         m_fbo{};
     GLuint                         m_fboTexture{};
     GLuint                         m_fboDepth{};
+    LightingManager                m_lighting{};
 
     glm::mat4 m_projMatrix{};
     glm::mat4 m_viewMatrix{};

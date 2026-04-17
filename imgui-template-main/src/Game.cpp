@@ -274,6 +274,7 @@ void Game::update()
     if (ImGui::IsKeyPressed(ImGuiKey_Escape))
         m_paused = !m_paused;
 
+    m_renderer.setCurrentPlayer(m_currentPlayer);
     m_renderer.draw(m_board);
 
     bool pauseRequested = false;

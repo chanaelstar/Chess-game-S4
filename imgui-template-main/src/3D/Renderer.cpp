@@ -1,6 +1,8 @@
 #include "3D/Renderer.hpp"
 #include <cmath>
+#include "3D/LightingManager.hpp"
 #include <glimac/FilePath.hpp>
+#include <glimac/Image.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -222,11 +224,35 @@ void Renderer3D::buildBorderMesh()
 
 void Renderer3D::buildBoardMesh()
 {
+    // Chaque vertex : x, y, z, u, v (5 floats)
     std::vector<float> vertices;
 
+    auto quad = [&](
+        float ax,float ay,float az,float au,float av,
+        float bx,float by,float bz,float bu,float bv,
+        float cx,float cy,float cz,float cu,float cv,
+        float dx,float dy,float dz,float du,float dv)
+    {
+        vertices.insert(vertices.end(), {ax,ay,az,au,av, bx,by,bz,bu,bv, cx,cy,cz,cu,cv});
+        vertices.insert(vertices.end(), {ax,ay,az,au,av, cx,cy,cz,cu,cv, dx,dy,dz,du,dv});
+    };
+
     for (int row = 0; row < 8; ++row)
+    {
         for (int col = 0; col < 8; ++col)
-            addBox(vertices, col - 4.f, row - 4.f, 1.f, 1.f, 0.45f);
+        {
+            float x1=col-4.f, x2=x1+1.f;
+            float z1=row-4.f, z2=z1+1.f;
+            float y1=0.f,     y2=0.45f;
+
+            quad(x1,y2,z1,0,0, x2,y2,z1,1,0, x2,y2,z2,1,1, x1,y2,z2,0,1); // dessus
+            quad(x1,y1,z1,0,0, x2,y1,z1,1,0, x2,y2,z1,1,1, x1,y2,z1,0,1); // avant
+            quad(x2,y1,z2,0,0, x1,y1,z2,1,0, x1,y2,z2,1,1, x2,y2,z2,0,1); // arrière
+            quad(x1,y1,z2,0,0, x1,y1,z1,1,0, x1,y2,z1,1,1, x1,y2,z2,0,1); // gauche
+            quad(x2,y1,z1,0,0, x2,y1,z2,1,0, x2,y2,z2,1,1, x2,y2,z1,0,1); // droite
+            quad(x1,y1,z2,0,0, x2,y1,z2,1,0, x2,y1,z1,1,1, x1,y1,z1,0,1); // dessous
+        }
+    }
 
     glGenVertexArrays(1, &m_vao);
     glGenBuffers(1, &m_vbo);
@@ -234,7 +260,9 @@ void Renderer3D::buildBoardMesh()
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
@@ -309,6 +337,7 @@ void Renderer3D::init()
     m_uniColor      = glGetUniformLocation(m_program->getGLId(), "uColor");
     m_uniTexture    = glGetUniformLocation(m_program->getGLId(), "uTexture");
     m_uniUseTexture = glGetUniformLocation(m_program->getGLId(), "uUseTexture");
+    m_uniLightMode  = glGetUniformLocation(m_program->getGLId(), "uLightMode");
 
     m_skyboxProgram = glimac::loadProgram(
         std::string(CMAKE_SOURCE_DIR) + "/assets/shaders/skybox.vs.glsl",
@@ -322,9 +351,34 @@ void Renderer3D::init()
         std::string(CMAKE_SOURCE_DIR) + "/assets/shaders/piece.fs.glsl"
     );
     m_pieceProgram->use();
-    m_pieceUniMVP   = glGetUniformLocation(m_pieceProgram->getGLId(), "uMVPMatrix");
-    m_pieceUniModel = glGetUniformLocation(m_pieceProgram->getGLId(), "uModelMatrix");
-    m_pieceUniColor = glGetUniformLocation(m_pieceProgram->getGLId(), "uColor");
+    m_pieceUniMVP        = glGetUniformLocation(m_pieceProgram->getGLId(), "uMVPMatrix");
+    m_pieceUniModel      = glGetUniformLocation(m_pieceProgram->getGLId(), "uModelMatrix");
+    m_pieceUniColor      = glGetUniformLocation(m_pieceProgram->getGLId(), "uColor");
+    m_pieceUniTime       = glGetUniformLocation(m_pieceProgram->getGLId(), "uTime");
+    m_pieceUniPlayerMode = glGetUniformLocation(m_pieceProgram->getGLId(), "uPlayerMode");
+
+    // Chargement de la texture du plateau
+    {
+        auto img = glimac::loadImage(glimac::FilePath(
+            std::string(CMAKE_SOURCE_DIR) + "/assets/textures/oak-wood-texture.jpg"));
+        if (img)
+        {
+            glGenTextures(1, &m_texLight);
+            glBindTexture(GL_TEXTURE_2D, m_texLight);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F,
+                         static_cast<GLsizei>(img->getWidth()),
+                         static_cast<GLsizei>(img->getHeight()),
+                         0, GL_RGBA, GL_FLOAT, img->getPixels());
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
+    }
+
+    m_lighting.start();
 
     // Chargement des pièces depuis le fichier OBJ unique
     const std::string objFile = std::string(CMAKE_SOURCE_DIR) + "/assets/models/Chess_set_game.obj";
@@ -380,20 +434,26 @@ void Renderer3D::draw(const ChessBoard& board)
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS); // restaure le comportement normal
 
+
     // --- Plateau, bords et pièces ---
     m_program->use();
 
     glm::mat4 mvp = m_projMatrix * m_viewMatrix;
     glUniformMatrix4fv(m_uniMVP, 1, GL_FALSE, glm::value_ptr(mvp));
-    glUniform1i(m_uniUseTexture, 0); // Utiliser les couleurs, pas les textures
+    m_lighting.applyToBoardShader(m_uniLightMode);
+    glUniform1i(m_uniUseTexture, 0);
 
-    // Draw border
+    // Bord
     glm::vec3 borderColor = glm::vec3(0.35f, 0.20f, 0.08f);
     glUniform3fv(m_uniColor, 1, glm::value_ptr(borderColor));
     glBindVertexArray(m_borderVao);
     glDrawArrays(GL_TRIANGLES, 0, m_borderVertexCount);
 
-    // Draw chess squares
+    // Cases du plateau — texture + couleur
+    glUniform1i(m_uniUseTexture, 1);
+    glUniform1i(m_uniTexture, 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_texLight);
     glBindVertexArray(m_vao);
     int vertexIndex = 0;
     for (int row = 0; row < 8; ++row)
@@ -402,13 +462,13 @@ void Renderer3D::draw(const ChessBoard& board)
         {
             bool      isLight = (row + col) % 2 == 0;
             glm::vec3 color   = isLight ? m_colorLight : m_colorDark;
-
             glUniform3fv(m_uniColor, 1, glm::value_ptr(color));
-
             glDrawArrays(GL_TRIANGLES, vertexIndex, 36);
             vertexIndex += 36;
         }
     }
+    glUniform1i(m_uniUseTexture, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     // Rendu des pièces avec les modèles OBJ
     auto targetHeight = [](PieceType type) -> float {
@@ -427,6 +487,7 @@ void Renderer3D::draw(const ChessBoard& board)
     if (m_pieceProgram)
     {
         m_pieceProgram->use();
+        m_lighting.applyToPieceShader(m_pieceUniTime, m_pieceUniPlayerMode);
         for (int row = 0; row < 8; ++row)
         {
             for (int col = 0; col < 8; ++col)
