@@ -64,7 +64,8 @@ private:
     NormalDistribution      m_normal;
     BetaDistribution        m_beta;
     CauchyDistribution      m_cauchy;
-    std::optional<Move>   m_pendingAIMove; // coup IA différé (attend fin d'animation)
+    std::optional<Move>   m_pendingAIMove;   // coup IA différé (attend fin d'animation+délai)
+    bool                  m_switchAfterAnim{false}; // switch joueur après animation+délai (2J ou post-IA)
     int                   m_chaosCountdown{1};
     bool                  m_chaosInitialized{false};
     float                 m_spontaneousTimer{0.f};

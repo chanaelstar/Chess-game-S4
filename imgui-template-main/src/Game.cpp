@@ -28,6 +28,7 @@ void Game::resetGame()
     m_moveHistory.clear();
     m_undoStack.clear();
     m_pendingAIMove.reset();
+    m_switchAfterAnim  = false;
     m_currentPlayer    = PieceColor::White;
     m_winner           = PieceColor::None;
     m_paused           = false;
@@ -189,12 +190,16 @@ void Game::handlePostMove()
     }
     if (m_winner == PieceColor::None)
     {
-        switchPlayer();
-        // En mode 1 joueur, différer le coup IA après la fin de l'animation humaine
-        if (m_interface.getGameMode() == GameMode::OnePlayer
-            && m_currentPlayer == PieceColor::Black)
+        if (m_interface.getGameMode() == GameMode::OnePlayer)
         {
+            // Différer : le joueur courant (humain) garde son éclairage pendant l'animation.
+            // Le switch + coup IA s'exécuteront après animation+délai.
             m_pendingAIMove = AIPlayer::getMove(m_board, PieceColor::Black);
+        }
+        else
+        {
+            // Mode 2 joueurs : switch après animation+délai (éclairage cohérent)
+            m_switchAfterAnim = true;
         }
     }
 }
@@ -345,9 +350,17 @@ void Game::update()
     if (ImGui::IsKeyPressed(ImGuiKey_Escape))
         m_paused = !m_paused;
 
-    // Coup IA différé : exécuter dès que l'animation précédente est terminée
-    if (m_pendingAIMove && !m_renderer.isAnimating())
+    // Switch joueur différé (mode 2J) : après animation+délai
+    if (m_switchAfterAnim && m_renderer.isReadyForNext())
     {
+        m_switchAfterAnim = false;
+        switchPlayer();
+    }
+
+    // Coup IA différé (mode 1J) : après animation humaine + délai
+    if (m_pendingAIMove && m_renderer.isReadyForNext())
+    {
+        switchPlayer(); // humain → IA (éclairage bascule maintenant)
         auto ai = *m_pendingAIMove;
         m_pendingAIMove.reset();
         m_board.movePiece(ai.fromRow, ai.fromCol, ai.toRow, ai.toCol);
@@ -358,7 +371,7 @@ void Game::update()
         }
         m_winner = m_board.getWinner();
         if (m_winner == PieceColor::None)
-            switchPlayer();
+            m_switchAfterAnim = true; // switch retour après animation IA + délai
     }
 
     m_renderer.setCurrentPlayer(m_currentPlayer);
@@ -409,7 +422,14 @@ void Game::update()
 
     // Sauvegarder l'état AVANT le coup (drawBoard applique le coup en interne)
     TurnSnapshot preMove{m_board.takeSnapshot(), m_currentPlayer, m_moveHistory};
-    if (m_board.drawBoard(m_currentPlayer))
+    // Bloquer les coups pendant l'animation / le délai post-animation
+    if (!m_renderer.isReadyForNext())
+    {
+        ImGui::BeginDisabled();
+        m_board.drawBoard(m_currentPlayer);
+        ImGui::EndDisabled();
+    }
+    else if (m_board.drawBoard(m_currentPlayer))
     {
         m_undoStack.push_back(preMove);
         if (auto lm = m_board.getLastMove())
@@ -503,8 +523,8 @@ void Game::update()
                 m_renderer.setHoverSquare(-1, -1);
             }
 
-            // Clic gauche sans drag → sélection / déplacement
-            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            // Clic gauche sans drag → sélection / déplacement (bloqué pendant animation)
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && m_renderer.isReadyForNext())
             {
                 auto [cr, cc] = m_renderer.pickSquare(relX, relY, drawW, drawH);
                 if (cr >= 0)

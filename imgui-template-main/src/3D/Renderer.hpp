@@ -44,7 +44,8 @@ public:
     {
         m_animator.startMove(fromRow, fromCol, toRow, toCol);
     }
-    bool isAnimating() const { return m_animator.isAnimating(); }
+    bool isAnimating()    const { return m_animator.isAnimating(); }
+    bool isReadyForNext() const { return m_animator.isReadyForNext(); }
     // Sélection / hover (§3.6)
     std::pair<int,int> pickSquare(float mouseRelX, float mouseRelY, float imgW, float imgH) const;
     void setHoverSquare(int row, int col) { m_hoverRow = row; m_hoverCol = col; }

@@ -7,13 +7,20 @@
 class PieceAnimator {
 public:
     // Lance l'animation de la pièce qui vient d'être déplacée.
-    // duration : durée totale en secondes.
-    void startMove(int fromRow, int fromCol, int toRow, int toCol, float duration = 0.45f);
+    // duration  : durée du déplacement en secondes.
+    // postDelay : pause après l'atterrissage avant de signaler isReadyForNext().
+    void startMove(int fromRow, int fromCol, int toRow, int toCol,
+                   float duration = 0.45f, float postDelay = 0.35f);
 
     // Avance l'animation de dt secondes.
     void update(float dt);
 
+    // Pièce en vol (position interpolée active).
     bool isAnimating() const { return m_active; }
+
+    // Vrai quand le déplacement ET le délai post-animation sont terminés.
+    // Indique que le jeu peut passer au joueur suivant.
+    bool isReadyForNext() const { return !m_active && m_postDelay <= 0.f; }
 
     // Si (row, col) est la destination de la pièce en cours d'animation,
     // modifie worldPos avec la position interpolée et retourne true.
@@ -27,6 +34,7 @@ private:
     bool  m_active{false};
     int   m_fromRow{}, m_fromCol{};
     int   m_toRow{},   m_toCol{};
-    float m_t{0.f};        // progression brute [0, 1]
+    float m_t{0.f};            // progression brute [0, 1]
     float m_duration{0.45f};
+    float m_postDelay{0.f};    // délai résiduel après atterrissage
 };
