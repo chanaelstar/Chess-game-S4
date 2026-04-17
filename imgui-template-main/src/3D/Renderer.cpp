@@ -371,8 +371,10 @@ void Renderer3D::init()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Renderer3D::draw(const ChessBoard& board)
+void Renderer3D::draw(const ChessBoard& board, float dt)
 {
+    m_animator.update(dt);
+
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     glViewport(0, 0, FBO_WIDTH, FBO_HEIGHT);
 
@@ -466,6 +468,10 @@ void Renderer3D::draw(const ChessBoard& board)
                 float cx = col - 4.f + 0.5f;
                 float cz = row - 4.f + 0.5f;
 
+                // Position monde : remplacée par l'animation si cette pièce est en déplacement
+                glm::vec3 piecePos(cx, 0.45f, cz);
+                m_animator.getAnimatedPos(row, col, piecePos);
+
                 // Centre du bounding box en XZ (les modèles ne sont pas centrés à l'origine)
                 glm::vec3 bboxCenter = (mesh.bboxMin + mesh.bboxMax) * 0.5f;
 
@@ -478,11 +484,7 @@ void Renderer3D::draw(const ChessBoard& board)
                 if (piece->getType() == PieceType::Knight && piece->getColor() == PieceColor::White)
                     extraRotY = glm::radians(180.f);
 
-                // 1) Recentre le modèle (XZ) et pose la base à y=0
-                // 2) Rotation éventuelle
-                // 3) Met à l'échelle
-                // 4) Translate vers la case cible (y=0.45 = dessus du plateau)
-                glm::mat4 model = glm::translate(glm::mat4(1.f), glm::vec3(cx, 0.45f, cz))
+                glm::mat4 model = glm::translate(glm::mat4(1.f), piecePos)
                                   * glm::scale(glm::mat4(1.f), glm::vec3(scale))
                                   * glm::rotate(glm::mat4(1.f), extraRotY, glm::vec3(0.f, 1.f, 0.f))
                                   * glm::translate(glm::mat4(1.f), glm::vec3(-bboxCenter.x, -mesh.bboxMin.y, -bboxCenter.z));

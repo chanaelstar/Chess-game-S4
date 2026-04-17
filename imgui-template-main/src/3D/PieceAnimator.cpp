@@ -1,0 +1,54 @@
+#include "3D/PieceAnimator.hpp"
+#include <glm/gtx/compatibility.hpp> // glm::lerp / glm::mix
+#include <algorithm>
+#include <cmath>
+
+glm::vec3 PieceAnimator::squareTop(int row, int col)
+{
+    return glm::vec3(col - 4.f + 0.5f, 0.45f, row - 4.f + 0.5f);
+}
+
+void PieceAnimator::startMove(int fromRow, int fromCol, int toRow, int toCol, float duration)
+{
+    m_fromRow  = fromRow; m_fromCol = fromCol;
+    m_toRow    = toRow;   m_toCol   = toCol;
+    m_t        = 0.f;
+    m_duration = (duration > 0.f) ? duration : 0.45f;
+    m_active   = true;
+}
+
+void PieceAnimator::update(float dt)
+{
+    if (!m_active) return;
+    m_t += dt / m_duration;
+    if (m_t >= 1.f)
+    {
+        m_t      = 1.f;
+        m_active = false;
+    }
+}
+
+bool PieceAnimator::getAnimatedPos(int row, int col, glm::vec3& worldPos) const
+{
+    if (!m_active || row != m_toRow || col != m_toCol)
+        return false;
+
+    glm::vec3 src = squareTop(m_fromRow, m_fromCol);
+    glm::vec3 dst = squareTop(m_toRow,   m_toCol);
+
+    // Easing smoothstep pour un démarrage et une arrivée fluides
+    float t = m_t * m_t * (3.f - 2.f * m_t);
+
+    // Position interpolée (XZ + hauteur de base)
+    worldPos = glm::mix(src, dst, t);
+
+    // Arc parabolique : hauteur proportionnelle à la distance parcourue
+    float dist = std::sqrt((dst.x - src.x) * (dst.x - src.x)
+                         + (dst.z - src.z) * (dst.z - src.z));
+    float arcH = std::max(0.25f, std::min(dist * 0.20f, 1.6f));
+
+    // t brut pour la parabole (symétrie parfaite même avec easing sur XZ)
+    worldPos.y += arcH * 4.f * m_t * (1.f - m_t);
+
+    return true;
+}

@@ -27,6 +27,7 @@ void Game::resetGame()
     m_board.resetBoard();
     m_moveHistory.clear();
     m_undoStack.clear();
+    m_pendingAIMove.reset();
     m_currentPlayer    = PieceColor::White;
     m_winner           = PieceColor::None;
     m_paused           = false;
@@ -189,19 +190,11 @@ void Game::handlePostMove()
     if (m_winner == PieceColor::None)
     {
         switchPlayer();
+        // En mode 1 joueur, différer le coup IA après la fin de l'animation humaine
         if (m_interface.getGameMode() == GameMode::OnePlayer
             && m_currentPlayer == PieceColor::Black)
         {
-            auto aiMove = AIPlayer::getMove(m_board, PieceColor::Black);
-            if (aiMove)
-            {
-                m_board.movePiece(aiMove->fromRow, aiMove->fromCol, aiMove->toRow, aiMove->toCol);
-                if (auto lm = m_board.getLastMove())
-                    m_moveHistory.push_back(formatMove(PieceColor::Black, *lm));
-                m_winner = m_board.getWinner();
-                if (m_winner == PieceColor::None)
-                    switchPlayer();
-            }
+            m_pendingAIMove = AIPlayer::getMove(m_board, PieceColor::Black);
         }
     }
 }
@@ -224,7 +217,10 @@ void Game::handle3DClick(int row, int col)
                 m_board.movePiece(selRow, selCol, row, col);
                 m_board.setSelectedSquare(-1, -1);
                 if (auto lm = m_board.getLastMove())
+                {
                     m_moveHistory.push_back(formatMove(m_currentPlayer, *lm));
+                    m_renderer.startPieceAnimation(lm->fromRow, lm->fromCol, lm->toRow, lm->toCol);
+                }
                 handlePostMove();
                 return;
             }
@@ -349,8 +345,24 @@ void Game::update()
     if (ImGui::IsKeyPressed(ImGuiKey_Escape))
         m_paused = !m_paused;
 
+    // Coup IA différé : exécuter dès que l'animation précédente est terminée
+    if (m_pendingAIMove && !m_renderer.isAnimating())
+    {
+        auto ai = *m_pendingAIMove;
+        m_pendingAIMove.reset();
+        m_board.movePiece(ai.fromRow, ai.fromCol, ai.toRow, ai.toCol);
+        if (auto lm = m_board.getLastMove())
+        {
+            m_moveHistory.push_back(formatMove(PieceColor::Black, *lm));
+            m_renderer.startPieceAnimation(lm->fromRow, lm->fromCol, lm->toRow, lm->toCol);
+        }
+        m_winner = m_board.getWinner();
+        if (m_winner == PieceColor::None)
+            switchPlayer();
+    }
+
     m_renderer.setCurrentPlayer(m_currentPlayer);
-    m_renderer.draw(m_board);
+    m_renderer.draw(m_board, dt);
 
     bool pauseRequested = false;
     bool undoRequested  = m_hud.draw(m_currentPlayer, m_moveHistory, !m_undoStack.empty(), pauseRequested);
@@ -401,7 +413,10 @@ void Game::update()
     {
         m_undoStack.push_back(preMove);
         if (auto lm = m_board.getLastMove())
+        {
             m_moveHistory.push_back(formatMove(m_currentPlayer, *lm));
+            m_renderer.startPieceAnimation(lm->fromRow, lm->fromCol, lm->toRow, lm->toCol);
+        }
         handlePostMove();
     }
 
@@ -489,7 +504,7 @@ void Game::update()
             }
 
             // Clic gauche sans drag → sélection / déplacement
-            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !m_renderer.isPieceView())
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
                 auto [cr, cc] = m_renderer.pickSquare(relX, relY, drawW, drawH);
                 if (cr >= 0)

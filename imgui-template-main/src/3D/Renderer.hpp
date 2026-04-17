@@ -9,6 +9,7 @@
 #include "3D/CameraController.hpp"
 #include "3D/LightingManager.hpp"
 #include "3D/ModelLoader.hpp"
+#include "3D/PieceAnimator.hpp"
 #include "3D/RayCaster.hpp"
 #include "Piece.hpp"
 
@@ -19,7 +20,7 @@ public:
     Renderer3D() = default;
 
     void   init();
-    void   draw(const ChessBoard& board);
+    void   draw(const ChessBoard& board, float dt);
     GLuint getTextureId() const { return m_fboTexture; }
 
     static constexpr int FBO_WIDTH  = 800;
@@ -38,6 +39,12 @@ public:
     // Éclairage / couleurs
     void setChaosColors(glm::vec3 light, glm::vec3 dark);
     void setCurrentPlayer(PieceColor p) { m_lighting.setCurrentPlayer(p); }
+    // Animation (§3.7)
+    void startPieceAnimation(int fromRow, int fromCol, int toRow, int toCol)
+    {
+        m_animator.startMove(fromRow, fromCol, toRow, toCol);
+    }
+    bool isAnimating() const { return m_animator.isAnimating(); }
     // Sélection / hover (§3.6)
     std::pair<int,int> pickSquare(float mouseRelX, float mouseRelY, float imgW, float imgH) const;
     void setHoverSquare(int row, int col) { m_hoverRow = row; m_hoverCol = col; }
@@ -83,6 +90,7 @@ private:
     GLuint                         m_fboDepth{};
     CameraController               m_camera{};
     LightingManager                m_lighting{};
+    PieceAnimator                  m_animator{};
     glm::mat4                      m_projMatrix{};
     // Couleurs des cases (modifiables en mode chaos)
     glm::vec3 m_colorLight{1.f, 0.871f, 0.455f};

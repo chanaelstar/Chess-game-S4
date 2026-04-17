@@ -3,6 +3,7 @@
 #include <vector>
 #include "3D/Renderer.hpp"
 #include "AI/AIPlayer.hpp"
+#include <optional>
 #include "ChessBoard.hpp"
 #include <chrono>
 #include <vector>
@@ -63,6 +64,7 @@ private:
     NormalDistribution      m_normal;
     BetaDistribution        m_beta;
     CauchyDistribution      m_cauchy;
+    std::optional<Move>   m_pendingAIMove; // coup IA différé (attend fin d'animation)
     int                   m_chaosCountdown{1};
     bool                  m_chaosInitialized{false};
     float                 m_spontaneousTimer{0.f};
